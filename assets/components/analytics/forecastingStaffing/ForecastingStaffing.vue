@@ -1,6 +1,6 @@
 <template>
   <va-content class="content">
-    <h1>Прогнозирование кадровой потребности</h1>
+    <h3>Прогнозирование кадровой потребности</h3>
   </va-content>
 </template>
 

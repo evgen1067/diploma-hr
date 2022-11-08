@@ -1,6 +1,6 @@
 <template>
   <va-content class="content">
-    <h1>Показатели текучести</h1>
+    <h3>Показатели текучести</h3>
   </va-content>
 </template>
 

@@ -4,7 +4,7 @@
       <template v-for="(item, key) in routes" :key="key" >
         <va-sidebar-item @click="toRoute(item.routeName)">
           <va-sidebar-item-content>
-            <va-icon :name="item.meta.icon" />
+            <va-icon color="#8338ec" :name="item.meta.icon" />
             <va-sidebar-item-title>
               {{ item.title }}
             </va-sidebar-item-title>

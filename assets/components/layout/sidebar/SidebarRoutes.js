@@ -1,6 +1,13 @@
 export default {
   routes: [
     {
+      title: 'Управление сотрудниками',
+      routeName: 'employee',
+      meta: {
+        icon: 'badge',
+      },
+    },
+    {
       title: 'Показатели текучести',
       routeName: 'turnover_rates',
       meta: {

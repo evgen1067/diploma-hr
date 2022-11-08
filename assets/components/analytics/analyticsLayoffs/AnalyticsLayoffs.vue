@@ -1,6 +1,6 @@
 <template>
   <va-content class="content">
-    <h1>Аналитика причин увольнений</h1>
+    <h3>Аналитика причин увольнений</h3>
   </va-content>
 </template>
 

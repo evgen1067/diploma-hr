@@ -1,13 +1,19 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
-import HomeView from '@/views/HomeView';
-import TurnoverRates from '@/components/analytics/turnoverRates/TurnoverRates';
-import AnalyticsLayoffs from '@/components/analytics/analyticsLayoffs/AnalyticsLayoffs';
-import ForecastingStaffing from '@/components/analytics/forecastingStaffing/ForecastingStaffing';
+import HomeView from "../views/HomeView";
+import TurnoverRates from "../components/analytics/turnoverRates/TurnoverRates";
+import AnalyticsLayoffs from "../components/analytics/analyticsLayoffs/AnalyticsLayoffs";
+import ForecastingStaffing from "../components/analytics/forecastingStaffing/ForecastingStaffing";
+import HrEmployee from "../components/employee/HrEmployee";
 const routes = [
   {
     path: '/',
     name: 'home',
     component: HomeView,
+  },
+  {
+    path: '/employee',
+    name: 'employee',
+    component: HrEmployee,
   },
   {
     path: '/turnover/rates',
