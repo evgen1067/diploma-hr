@@ -1,10 +1,11 @@
 <template>
   <div class="h-100">
     <va-sidebar :minimized="minimized" :width="width">
-      <template v-for="(item, key) in routes" :key="key" >
-        <va-sidebar-item @click="toRoute(item.routeName)">
+      <template v-for="(item, key) in routes" :key="key">
+        <va-sidebar-item @click="toRoute(item.routeName)" active-color="#6D39CC" :active="isRouteActive(item.routeName)" hover-color="#6D39CC">
           <va-sidebar-item-content>
-            <va-icon color="#8338ec" :name="item.meta.icon" />
+            <va-icon v-if="!isRouteActive(item.routeName)" color="#6D39CC" :name="item.meta.icon" />
+            <va-icon v-else color="#FFFFFF" :name="item.meta.icon" />
             <va-sidebar-item-title>
               {{ item.title }}
             </va-sidebar-item-title>
@@ -38,6 +39,9 @@ export default {
         name: routeName,
       });
     },
+    isRouteActive(route) {
+      return route === this.$route.name;
+    }
   },
   computed: {
     routes() {

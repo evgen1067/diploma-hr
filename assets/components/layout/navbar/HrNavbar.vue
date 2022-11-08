@@ -6,9 +6,9 @@
           class="va-navbar__item"
           :class="{ 'x-flip': isSidebarMinimized }"
           @click="toggleSidebar"
-          color="#8338ec"
+          color="#6D39CC"
         />
-        <va-icon class="cursor-pointer" name="home" color="#8338ec" @click="goHome" />
+        <va-icon class="cursor-pointer" name="home" color="#6D39CC" @click="goHome" />
       </div>
     </template>
   </va-navbar>
