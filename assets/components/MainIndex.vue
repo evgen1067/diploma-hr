@@ -1,5 +1,5 @@
 <template>
-  <div class="app-layout">
+  <div class="app-layout" v-if="!loading">
     <hr-navbar />
     <div class="app-layout__content">
       <div class="app-layout__sidebar-wrapper" :class="{ minimized: isSidebarMinimized }">
@@ -12,18 +12,24 @@
       </div>
     </div>
   </div>
+  <div class="app-layout d-flex align-items-center align-content-center justify-content-center" v-else>
+    <hr-spinner />
+  </div>
 </template>
 
 <script>
-import HrSidebar from '@/components/layout/sidebar/HrSidebar';
-import HrNavbar from '@/components/layout/navbar/HrNavbar';
+import HrSidebar from '../components/layout/sidebar/HrSidebar';
+import HrNavbar from '../components/layout/navbar/HrNavbar';
+import HrSpinner from '../ui/hrSpinner/HrSpinner';
 export default {
   name: 'MainIndex',
-  components: { HrNavbar, HrSidebar },
-
+  components: { HrSpinner, HrNavbar, HrSidebar },
   computed: {
     isSidebarMinimized() {
       return this.$store.getters.isSidebarMinimized;
+    },
+    loading() {
+      return this.$store.getters.loading;
     },
   },
 };

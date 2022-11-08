@@ -3418,6 +3418,11 @@
   "resolved" "https://registry.npmjs.org/envinfo/-/envinfo-7.8.1.tgz"
   "version" "7.8.1"
 
+"epic-spinners@^2.0.0":
+  "integrity" "sha512-nU7xF7NoXrObmIGdXYwj1hfE3EH3jDVQ8oi1S5wG0yutrQILMJ3Xs0ZQEdGIjBQnFveDrAs/61m8/vm5SMvObA=="
+  "resolved" "https://registry.npmjs.org/epic-spinners/-/epic-spinners-2.0.0.tgz"
+  "version" "2.0.0"
+
 "err-code@^2.0.2":
   "integrity" "sha512-2bmlRpNKBxT/CRmPOlyISQpNj+qSeYvcym/uT0Jx2bMOlKLtSy1ZmLuVxSEKKyor/N5yhvp/ZiG1oE3DEYMSFA=="
   "resolved" "https://registry.npmjs.org/err-code/-/err-code-2.0.3.tgz"

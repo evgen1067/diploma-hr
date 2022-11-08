@@ -13,6 +13,16 @@ import { VaButton, VaContent } from 'vuestic-ui';
 export default {
   name: 'HrEmployee',
   components: { VaButton, VaContent },
+  created() {
+    // this.toggleLoading(true);
+    //
+    // this.toggleLoading(false);
+  },
+  methods: {
+    toggleLoading(value) {
+      this.$store.dispatch('toggleLoading', value);
+    },
+  },
 };
 </script>
 
