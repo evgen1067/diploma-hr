@@ -13,6 +13,7 @@
         "epic-spinners": "^2.0.0",
         "eslint": "^8.27.0",
         "lodash": "^4.17.21",
+        "lodash.clonedeep": "^4.5.0",
         "sass-loader": "^13.1.0",
         "vue": "^3.2.13",
         "vue-router": "^4.0.3",

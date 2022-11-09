@@ -1,6 +1,5 @@
 import { createStore } from 'vuex';
 import navbar from './navbar';
-import loading from './loading';
 
 export default createStore({
   state: {},
@@ -9,6 +8,5 @@ export default createStore({
   actions: {},
   modules: {
     navbar,
-    loading,
   },
 });

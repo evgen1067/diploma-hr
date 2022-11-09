@@ -1,5 +1,7 @@
 <template>
-  <breeding-rhombus-spinner :animation-duration="2000" :size="250" color="#154ec1" />
+  <div class="d-flex align-items-center align-content-center justify-content-center p-5">
+    <breeding-rhombus-spinner :animation-duration="2000" :size="150" color="#154ec1" />
+  </div>
 </template>
 
 <script>
