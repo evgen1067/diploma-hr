@@ -5,6 +5,11 @@
     "private": true,
     "dependencies": {
         "@fontsource/montserrat-alternates": "^4.5.11",
+        "@fortawesome/fontawesome-svg-core": "^6.2.0",
+        "@fortawesome/free-brands-svg-icons": "^6.2.0",
+        "@fortawesome/free-regular-svg-icons": "^6.2.0",
+        "@fortawesome/free-solid-svg-icons": "^6.2.0",
+        "@fortawesome/vue-fontawesome": "^3.0.2",
         "@popperjs/core": "^2.11.6",
         "@vuestic/ag-grid-theme": "^1.0.3",
         "axios": "^1.1.3",

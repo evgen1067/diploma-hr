@@ -1,6 +1,6 @@
 <template>
   <div class="d-flex align-items-center align-content-center justify-content-center p-5">
-    <breeding-rhombus-spinner :animation-duration="2000" :size="150" color="#154ec1" />
+    <breeding-rhombus-spinner :animation-duration="2000" :size="150" color="#6D39CC" />
   </div>
 </template>
 

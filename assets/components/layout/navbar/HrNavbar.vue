@@ -8,7 +8,7 @@
           @click="toggleSidebar"
           color="#6D39CC"
         />
-        <va-icon class="cursor-pointer" name="home" color="#6D39CC" @click="goHome" />
+        <va-icon v-if="$route.name !== 'home'" class="cursor-pointer" name="home" color="#6D39CC" @click="goHome" />
       </div>
     </template>
   </va-navbar>
@@ -19,7 +19,7 @@ import { VaNavbar, VaIcon } from 'vuestic-ui';
 import VaIconMenuCollapsed from '@/components/icons/VaIconMenuCollapsed';
 export default {
   name: 'HrNavbar',
-  components: { VaIcon, VaIconMenuCollapsed, VaNavbar },
+  components: {VaIcon, VaIconMenuCollapsed, VaNavbar },
   methods: {
     toggleSidebar() {
       this.$store.dispatch('toggleSidebarMinimized');

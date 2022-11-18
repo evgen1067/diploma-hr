@@ -2,10 +2,13 @@
   <div class="h-100">
     <va-sidebar :minimized="minimized" :width="width">
       <template v-for="(item, key) in routes" :key="key">
-        <va-sidebar-item @click="toRoute(item.routeName)" active-color="#6D39CC" :active="isRouteActive(item.routeName)" hover-color="#6D39CC">
+        <va-sidebar-item
+          :active="isRouteActive(item.routeName)"
+          active-color="#6D39CC"
+          @click="toRoute(item.routeName)"
+        >
           <va-sidebar-item-content>
-            <va-icon v-if="!isRouteActive(item.routeName)" color="#6D39CC" :name="item.meta.icon" />
-            <va-icon v-else color="#FFFFFF" :name="item.meta.icon" />
+            <va-icon :name="item.meta.icon" />
             <va-sidebar-item-title>
               {{ item.title }}
             </va-sidebar-item-title>
@@ -21,6 +24,12 @@ import sidebarRoutes from '@/components/layout/sidebar/SidebarRoutes';
 import { VaIcon, VaSidebar, VaSidebarItem, VaSidebarItemContent, VaSidebarItemTitle } from 'vuestic-ui';
 export default {
   name: 'HrSidebar',
+  data: () => ({
+    colors: {
+      primary: '#6D39CC',
+      secondary: '#9e7fd7',
+    },
+  }),
   props: {
     minimized: {
       type: Boolean,
@@ -41,7 +50,7 @@ export default {
     },
     isRouteActive(route) {
       return route === this.$route.name;
-    }
+    },
   },
   computed: {
     routes() {

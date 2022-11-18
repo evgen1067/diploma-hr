@@ -23,10 +23,39 @@ import '@fontsource/montserrat-alternates/900.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle';
 
+import { library } from '@fortawesome/fontawesome-svg-core';
+
+import {
+  faEquals,
+  faNotEqual,
+  faLessThan,
+  faLessThanEqual,
+  faGreaterThan,
+  faGreaterThanEqual,
+  faFont,
+  faCalendarDay,
+  faHouse,
+} from '@fortawesome/free-solid-svg-icons';
+
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+
+library.add(
+  faEquals,
+  faNotEqual,
+  faLessThan,
+  faLessThanEqual,
+  faGreaterThan,
+  faGreaterThanEqual,
+  faFont,
+  faCalendarDay,
+  faHouse,
+);
+
 import './styles/style.css';
 
 const app = withUUID(createApp(App));
 app.use(store);
 app.use(router);
 app.use(createVuestic({}));
+app.component('font-awesome-icon', FontAwesomeIcon);
 app.mount('#app');
