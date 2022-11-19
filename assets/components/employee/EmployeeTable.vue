@@ -1,44 +1,51 @@
 <template>
   <hr-modal ref="employeeModal" v-if="form && form.length">
     <template v-if="!cardLoading">
-      <va-content class="content">
-        <h4>{{ modalTitle }}</h4>
-      </va-content>
-      <va-form ref="form" tag="form" @validation="validation = $event" @submit.prevent="handleSubmit">
-        <div class="d-flex flex-column">
-          <template v-for="(inpInfo, key) in form" :key="key">
-            <va-input
-              v-if="inpInfo.datatype === 'string'"
-              v-model="request[inpInfo.key]"
-              :label="inpInfo.label"
-              :rules="inpInfo?.rule ? inpInfo?.rule : []"
-              class="mb-3"
-              type="text"
-            ></va-input>
-            <va-input
-              v-if="inpInfo.datatype === 'date'"
-              v-model="request[inpInfo.key]"
-              :label="inpInfo.label"
-              :rules="inpInfo?.rule ? inpInfo?.rule : []"
-              class="mb-3"
-              type="date"
-            ></va-input>
-            <va-select
-              v-if="inpInfo.datatype === 'list'"
-              v-model="request[inpInfo.key]"
-              :label="inpInfo.label"
-              :options="inpInfo.listItems"
-              :rules="inpInfo?.rule ? inpInfo?.rule : []"
-              text-by="label"
-              value-by="num"
-              class="w-100 mb-3"
-              clearable
-              color="#6D39CC"
-            ></va-select>
-          </template>
-          <va-button type="submit" class="mb-3"> Создать </va-button>
+      <div class="d-flex flex-column">
+        <div class="row">
+          <div class="col-6">
+            <img src="@/assets/employee.png" class="w-100" alt="">
+          </div>
+          <div class="col-6">
+            <va-content class="content">
+              <h4>{{ modalTitle }}</h4>
+            </va-content>
+            <va-form ref="form" tag="form" @validation="validation = $event" @submit.prevent="handleSubmit">
+              <template v-for="(inpInfo, key) in form" :key="key">
+                <va-input
+                  v-if="inpInfo.datatype === 'string'"
+                  v-model="request[inpInfo.key]"
+                  :label="inpInfo.label"
+                  :rules="inpInfo?.rule ? inpInfo?.rule : []"
+                  class="w-100 mb-3"
+                  type="text"
+                ></va-input>
+                <va-input
+                  v-if="inpInfo.datatype === 'date'"
+                  v-model="request[inpInfo.key]"
+                  :label="inpInfo.label"
+                  :rules="inpInfo?.rule ? inpInfo?.rule : []"
+                  class="w-100 mb-3"
+                  type="date"
+                ></va-input>
+                <va-select
+                  v-if="inpInfo.datatype === 'list'"
+                  v-model="request[inpInfo.key]"
+                  :label="inpInfo.label"
+                  :options="inpInfo.listItems"
+                  :rules="inpInfo?.rule ? inpInfo?.rule : []"
+                  text-by="label"
+                  value-by="num"
+                  class="w-100 mb-3"
+                  clearable
+                  color="#6D39CC"
+                ></va-select>
+              </template>
+              <va-button type="submit" class="w-100 mb-3"> Создать </va-button>
+            </va-form>
+          </div>
         </div>
-      </va-form>
+      </div>
     </template>
     <hr-spinner v-else />
   </hr-modal>

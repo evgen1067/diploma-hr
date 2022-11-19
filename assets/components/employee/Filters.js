@@ -1,4 +1,5 @@
-const textFilters = [
+// Фильтры для полей с datatype = string
+const stringFilters = [
   {
     iconName: 'font',
     label: 'Текст содержит..',
@@ -31,6 +32,7 @@ const textFilters = [
   },
 ];
 
+// Фильтры для полей с datatype = number
 const numberFilters = [
   {
     iconName: 'equals',
@@ -62,6 +64,7 @@ const numberFilters = [
   },
 ];
 
+// Фильтры для полей с datatype = date
 const dateFilters = [
   {
     iconName: 'calendar-day',
@@ -85,7 +88,7 @@ const dateFilters = [
 
 // лист возможных фильтров
 const filtersList = {
-  string: textFilters,
+  string: stringFilters,
   number: numberFilters,
   date: dateFilters,
 };

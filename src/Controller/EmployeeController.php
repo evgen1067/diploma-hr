@@ -21,7 +21,6 @@ class EmployeeController extends AbstractController
 {
     private Serializer $serializer;
 
-
     public function __construct() {
         $this->serializer = SerializerBuilder::create()->build();
     }
@@ -144,17 +143,19 @@ class EmployeeController extends AbstractController
             ->setPosition($position)
             ->setStatus($status);
 
-        if ($dateOfDismissal) {
-            $dateOfDismissal = DateTimeImmutable::createFromFormat('Y-m-d', $dateOfDismissal);
-            $employee->setDateOfDismissal($dateOfDismissal);
-        }
+        if ($employee->getStatus() === 'уволен') {
+            if ($dateOfDismissal) {
+                $dateOfDismissal = DateTimeImmutable::createFromFormat('Y-m-d', $dateOfDismissal);
+                $employee->setDateOfDismissal($dateOfDismissal);
+            }
 
-        if ($reasonForDismissal) {
-            $employee->setReasonForDismissal($reasonForDismissal);
-        }
+            if ($reasonForDismissal) {
+                $employee->setReasonForDismissal($reasonForDismissal);
+            }
 
-        if ($categoryOfDismissal) {
-            $employee->setCategoryOfDismissal($categoryOfDismissal);
+            if ($categoryOfDismissal) {
+                $employee->setCategoryOfDismissal($categoryOfDismissal);
+            }
         }
 
         $employeeRepository->save($employee, true);
@@ -219,17 +220,19 @@ class EmployeeController extends AbstractController
             ->setPosition($position)
             ->setStatus($status);
 
-        if ($dateOfDismissal) {
-            $dateOfDismissal = DateTimeImmutable::createFromFormat('d.m.Y', $dateOfDismissal);
-            $employee->setDateOfDismissal($dateOfDismissal);
-        }
+        if ($employee->getStatus() === 'уволен') {
+            if ($dateOfDismissal) {
+                $dateOfDismissal = DateTimeImmutable::createFromFormat('Y-m-d', $dateOfDismissal);
+                $employee->setDateOfDismissal($dateOfDismissal);
+            }
 
-        if ($reasonForDismissal) {
-            $employee->setReasonForDismissal($reasonForDismissal);
-        }
+            if ($reasonForDismissal) {
+                $employee->setReasonForDismissal($reasonForDismissal);
+            }
 
-        if ($categoryOfDismissal) {
-            $employee->setCategoryOfDismissal($categoryOfDismissal);
+            if ($categoryOfDismissal) {
+                $employee->setCategoryOfDismissal($categoryOfDismissal);
+            }
         }
 
         $employeeRepository->save($employee, true);

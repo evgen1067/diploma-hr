@@ -2,6 +2,66 @@ import { filtersList } from './Filters';
 import { EmployeeApi } from '../../api/employee/EmployeeApi';
 import cloneDeep from 'lodash.clonedeep';
 
+class Employee {
+  // получение списка сотрудников
+  static async getEmployees(filter, page, perPage) {
+    // очистка фильтра перед отправкой от лишней информации
+    for (let key in filter) {
+      delete filter[key].iconName;
+      delete filter[key].label;
+      if (filter[key].type !== 'number_inequality' && filter[key].value === '') {
+        delete filter[key];
+      } else if (
+        filter[key].type === 'number_inequality' &&
+        filter[key].valueTo.trim() === '' &&
+        filter[key].valueFrom.trim() === ''
+      ) {
+        delete filter[key];
+      } else if (filter[key].type === 'list') {
+        delete filter[key].listItems;
+      } else if (filter[key].type.includes('date')) {
+        if (!filter[key]?.value || filter[key]?.value.length < 1) {
+          delete filter[key];
+        } else {
+          filter[key].value = filter[key].value.toLocaleDateString();
+          console.log(filter[key].value);
+        }
+      }
+    }
+    // запрос на бэкенд за информацией о таблице
+    return EmployeeApi.getEmployees({
+      filter: JSON.stringify(filter),
+      page: page,
+      perPage: perPage,
+    });
+  }
+
+  // создание сотрудника
+  static async createEmployee(data) {
+    // запрос на бэкенд для создания сотрудника
+    return await EmployeeApi.createEmployee(data);
+  }
+
+  // удаление сотрудников по id
+  static async deleteEmployeesByIds(data) {
+    // запрос на бэкенд для удаления сотрудников
+    return await EmployeeApi.deleteEmployees(data);
+  }
+
+  // изменение сотрудника
+  static async editEmployee(data) {
+    // запрос на бэкенд для изменения сотрудника
+    return await EmployeeApi.editEmployee(data);
+  }
+
+  // получение сотрудника по id
+  static async getEmployeeById(id) {
+    // запрос на бэкенд для получения сотрудника по id
+    return await EmployeeApi.getEmployee(id);
+  }
+}
+
+// Набор атрибутов сотрудника
 const dataColumns = [
   {
     key: 'fullName',
@@ -150,59 +210,6 @@ for (let i = 0; i < dataColumns.length; i++) {
           type: 'list',
           listItems: dataColumns[i].listItems,
         };
-}
-
-class Employee {
-  // получение списка сотрудников
-  static async getEmployees(filter, page, perPage) {
-    for (let key in filter) {
-      delete filter[key].iconName;
-      delete filter[key].label;
-      if (filter[key].type !== 'number_inequality' && filter[key].value === '') {
-        delete filter[key];
-      } else if (
-        filter[key].type === 'number_inequality' &&
-        filter[key].valueTo.trim() === '' &&
-        filter[key].valueFrom.trim() === ''
-      ) {
-        delete filter[key];
-      } else if (filter[key].type === 'list') {
-        delete filter[key].listItems;
-      } else if (filter[key].type.includes('date')) {
-        if (!filter[key]?.value || filter[key]?.value.length < 1) {
-          delete filter[key];
-        } else {
-          filter[key].value = filter[key].value.toLocaleDateString();
-          console.log(filter[key].value);
-        }
-      }
-    }
-
-    return EmployeeApi.getEmployees({
-      filter: JSON.stringify(filter),
-      page: page,
-      perPage: perPage,
-    });
-  }
-
-  static async createEmployee(data) {
-    return await EmployeeApi.createEmployee(data);
-  }
-
-  // удаление сотрудников по id
-  static async deleteEmployeesByIds(data) {
-    return await EmployeeApi.deleteEmployees(data);
-  }
-
-  // изменение сотрудника
-  static async editEmployee(data) {
-    return await EmployeeApi.editEmployee(data);
-  }
-
-  // получение сотрудника по id
-  static async getEmployeeById(id) {
-    return await EmployeeApi.getEmployee(id);
-  }
 }
 
 export { emptyEmployeeRequest, dataColumns, filter, columns, Employee };

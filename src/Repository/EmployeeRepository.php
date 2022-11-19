@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Employee;
+use Cassandra\Date;
 use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
@@ -55,6 +56,19 @@ class EmployeeRepository extends ServiceEntityRepository
         1 => 'добровольная',
         2 => 'принудительная',
         3 => 'нежелательная',
+    ];
+
+    private const COLORS = [
+        '#2191FB',
+        '#8CDEDC',
+        '#329F5B',
+        '#8380B6',
+        '#177E89',
+        '#F40076',
+        '#FF6700',
+        '#2D1115',
+        '#CEFF1A',
+        '#D72638',
     ];
 
     public function remove(Employee $entity, bool $flush = false): void
@@ -163,14 +177,14 @@ class EmployeeRepository extends ServiceEntityRepository
             $dateEnd = new DateTimeImmutable();
         }
         $interval = $dateStart->diff($dateEnd);
-        return round($interval->y + fdiv($interval->m, 12.0), 2);
+        return round(fdiv($interval->days, 365.0), 2);
     }
 
     public function getTableData(array|null $filter): array
     {
         $query = $this->createQueryBuilder('e');
 
-        $query->select('e');
+        $query->select("e");
 
         if ($filter) {
             $query = $this->buildQuery($query, $filter);
@@ -216,5 +230,112 @@ class EmployeeRepository extends ServiceEntityRepository
            }
        }
         return $result;
+    }
+
+    public function findDataForLayoffsChart($department, $range, $work): array
+    {
+        $query = $this->createQueryBuilder('e');
+        $query
+            ->andWhere('e.status = 3');
+
+        $labels = [];
+        $datasets = [
+            'label' => 'По всей компании',
+            'backgroundColor' => self::COLORS,
+            'borderWidth' => 1,
+            'data' => [],
+        ];
+
+        if ($department) {
+            $datasets['label'] = $department;
+            $query->andWhere('e.department = :depName')
+                ->setParameter('depName', $department);
+        }
+
+        if ($range) {
+            if ($range === 'Месяц') {
+                $date = new DateTimeImmutable('-1 month');
+                $query->andWhere('e.dateOfDismissal > :dateDis')
+                    ->setParameter('dateDis', $date);
+                $datasets['label'] .= ' за период с ' . $date->format('d.m.Y');
+            }
+
+            if ($range === 'Квартал') {
+                $date = new DateTimeImmutable('-3 month');
+                $query->andWhere('e.dateOfDismissal > :dateDis')
+                    ->setParameter('dateDis', $date);
+                $datasets['label'] .= ' за период с ' . $date->format('d.m.Y');
+            }
+
+            if ($range === 'Год') {
+                $date = new DateTimeImmutable('-1 year');
+                $query->andWhere('e.dateOfDismissal > :dateDis')
+                    ->setParameter('dateDis', $date);
+                $datasets['label'] .= ' за период с ' . $date->format('d.m.Y');
+            }
+        }
+
+        $allData = [];
+
+        /**
+         * @var array $result
+         */
+        $result = $query->getQuery()->getArrayResult();
+
+        if ($work) {
+            $resultSet = [];
+            foreach ($result as $key => $item) {
+                $workExp = $this->getWorkExperience(
+                    $item['dateOfEmployment'],
+                    $item['dateOfDismissal'],
+                );
+                if ($work === 'меньше 3х месяцев' && $workExp < 0.25) {
+                    $resultSet[] = $item;
+                } else if ($work === 'до 1 года работы' && $workExp < 1) {
+                    $resultSet[] = $item;
+                } else if ($work === 'до 3х лет работы' && $workExp < 3) {
+                    $resultSet[] = $item;
+                } else if (($work === 'свыше 3х лет работы') && $workExp >= 3) {
+                    $resultSet[] = $item;
+                }
+            }
+            $result = $resultSet;
+            $datasets['label'] .= ' со стажем ' . $work;
+        }
+
+        foreach ($result as $key => $item) {
+            $allData[] = $item['reasonForDismissal'];
+        }
+
+        $reasonAndCounts = array_count_values($allData);
+
+        foreach ($reasonAndCounts as $key => $item) {
+            $labels[] = self::REASON_TYPES[$key];
+            $datasets['data'][] = $item;
+        }
+
+        return [
+            'labels' => $labels,
+            'datasets' => [ $datasets ],
+        ];
+    }
+
+    public function findAllDepartments(): array
+    {
+        $query = $this->createQueryBuilder('e');
+        $query
+            ->distinct(true)
+            ->select('e.department')
+            ->andWhere('e.status = 3');
+        $allData = [];
+
+        /**
+         * @var array $result
+         */
+        $result = $query->getQuery()->getArrayResult();
+        foreach ($result as $key => $item) {
+            $allData[] = $item['department'];
+        }
+        return $allData;
     }
 }
