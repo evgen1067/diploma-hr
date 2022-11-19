@@ -8,7 +8,7 @@
         <div class="row">
           <div class="d-flex flex-row align-items-center">
             <va-select
-              label="Отдел (компания)"
+              label="Отдел"
               v-model="filter.department"
               :options="departmentOptions"
               clearable
@@ -41,8 +41,9 @@
         <div class="row">
           <div class="col-12">
             <Bar
-              v-if="!loading"
-              :chart-data="chartData"
+              v-for="(data, key) in chartData"
+              :key="key"
+              :chart-data="data"
               :chart-options="{ ...chartOptions, ...horizontalBarOptions }"
             />
           </div>

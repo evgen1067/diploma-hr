@@ -240,7 +240,7 @@ class EmployeeRepository extends ServiceEntityRepository
 
         $labels = [];
         $datasets = [
-            'label' => 'По всей компании',
+            'label' => 'по всей компании',
             'backgroundColor' => self::COLORS,
             'borderWidth' => 1,
             'data' => [],
@@ -275,7 +275,8 @@ class EmployeeRepository extends ServiceEntityRepository
             }
         }
 
-        $allData = [];
+        $reasonData = [];
+        $categoryData = [];
 
         /**
          * @var array $result
@@ -304,20 +305,41 @@ class EmployeeRepository extends ServiceEntityRepository
         }
 
         foreach ($result as $key => $item) {
-            $allData[] = $item['reasonForDismissal'];
+            $reasonData[] = $item['reasonForDismissal'];
+            $categoryData[] = $item['categoryOfDismissal'];
         }
 
-        $reasonAndCounts = array_count_values($allData);
+        $reasonAndCounts = array_count_values($reasonData);
+        $categoryAndCounts = array_count_values($categoryData);
+
+        $resultData = [
+            [
+                'labels' => $labels,
+                'datasets' => [ $datasets ],
+            ],
+            [
+                'labels' => $labels,
+                'datasets' => [ $datasets ],
+            ]
+        ];
 
         foreach ($reasonAndCounts as $key => $item) {
-            $labels[] = self::REASON_TYPES[$key];
-            $datasets['data'][] = $item;
+            $resultData[0]['labels'][] = self::REASON_TYPES[$key];
+            $resultData[0]['datasets'][0]['data'][] = $item;
         }
 
-        return [
-            'labels' => $labels,
-            'datasets' => [ $datasets ],
-        ];
+        foreach ($categoryAndCounts as $key => $item) {
+            $resultData[1]['labels'][] = self::CATEGORY_TYPE[$key];
+            $resultData[1]['datasets'][0]['data'][] = $item;
+        }
+
+        $resultData[0]['datasets'][0]['label'] =
+            'Причины увольнения ' . ($department ? 'в ' : '') . $resultData[0]['datasets'][0]['label'];
+
+        $resultData[1]['datasets'][0]['label'] =
+            'Категории увольнения ' . ($department ? 'в ' : '') . $resultData[1]['datasets'][0]['label'];
+
+        return $resultData;
     }
 
     public function findAllDepartments(): array
