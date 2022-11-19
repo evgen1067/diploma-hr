@@ -1,109 +1,120 @@
 import { filtersList } from './Filters';
+import { EmployeeApi } from '../../api/employee/EmployeeApi';
+import cloneDeep from 'lodash.clonedeep';
 
 const dataColumns = [
   {
-    name: 'fullName',
+    key: 'fullName',
     datatype: 'string',
+    label: 'ФИО',
   },
   {
-    name: 'dateOfEmployment',
+    key: 'dateOfEmployment',
     datatype: 'date',
+    label: 'Дата трудоустройства',
   },
   {
-    name: 'workExperience',
+    key: 'workExperience',
     datatype: 'no',
+    label: 'Опыт работы',
   },
   {
-    name: 'department',
+    key: 'department',
     datatype: 'string',
+    label: 'Отдел',
   },
   {
-    name: 'position',
+    key: 'position',
     datatype: 'string',
+    label: 'Должность',
   },
   {
-    name: 'status',
+    key: 'status',
     datatype: 'list',
+    label: 'Статус',
     listItems: [
       {
         label: 'работает',
-        num: '1',
+        num: 1,
       },
       {
         label: 'декрет',
-        num: '2',
+        num: 2,
       },
       {
         label: 'уволен',
-        num: '3',
+        num: 3,
       },
     ],
   },
   {
-    name: 'dateOfDismissal',
+    key: 'dateOfDismissal',
     datatype: 'date',
+    label: 'Дата увольнения',
   },
   {
-    name: 'reasonForDismissal',
+    key: 'reasonForDismissal',
     datatype: 'list',
+    label: 'Причина увольнения',
     listItems: [
       {
         label: 'не пройден испытательный срок',
-        num: '1',
+        num: 1,
       },
       {
         label: 'проблемы с дисциплиной',
-        num: '2',
+        num: 2,
       },
       {
         label: 'не справлялся с поставленными задачами',
-        num: '3',
+        num: 3,
       },
       {
         label: 'сокращение',
-        num: '4',
+        num: 4,
       },
       {
         label: 'предложение о работе с высокой заработной платой',
-        num: '5',
+        num: 5,
       },
       {
         label: 'потерял ценность',
-        num: '6',
+        num: 6,
       },
       {
         label: 'не видит для себя профессионального развития',
-        num: '7',
+        num: 7,
       },
       {
         label: 'хочет сменить должность/направление',
-        num: '8',
+        num: 8,
       },
       {
         label: 'выгорание',
-        num: '9',
+        num: 9,
       },
       {
         label: 'релокация',
-        num: '10',
+        num: 10,
       },
     ],
   },
   {
-    name: 'categoryOfDismissal',
+    key: 'categoryOfDismissal',
     datatype: 'list',
+    label: 'Категория увольнения',
     listItems: [
       {
         label: 'добровольная',
-        num: '1',
+        num: 1,
       },
       {
         label: 'принудительная',
-        num: '2',
+        num: 2,
       },
       {
         label: 'нежелательная',
-        num: '3',
+        num: 3,
       },
     ],
   },
@@ -118,18 +129,18 @@ let emptyEmployeeRequest = {},
   filter = {};
 
 for (let i = 0; i < dataColumns.length; i++) {
-  emptyEmployeeRequest[dataColumns[i]] = '';
+  emptyEmployeeRequest[dataColumns[i].key] = '';
   columns.push({
-    key: dataColumns[i].name,
+    key: dataColumns[i].key,
     sortable: true,
     datatype: dataColumns[i].datatype,
     tdAlign: 'center',
     thAlign: 'center',
   });
-  if (dataColumns[i].name === 'workExperience') {
+  if (dataColumns[i].key === 'workExperience') {
     continue;
   }
-  filter[dataColumns[i].name] =
+  filter[dataColumns[i].key] =
     dataColumns[i].datatype !== 'list'
       ? cloneDeep(filtersList[dataColumns[i].datatype][0])
       : {
@@ -141,79 +152,13 @@ for (let i = 0; i < dataColumns.length; i++) {
         };
 }
 
-const employeeForm = [
-  {
-    key: 'fullName',
-    label: 'ФИО',
-    type: 'text',
-    // rule: [value => value === 'Ben' || 'Should be Ben'],
-  },
-  {
-    key: 'dateOfEmployment',
-    label: 'дата трудоустройства',
-    type: 'text',
-    // rule: [value => value === 'Ben' || 'Should be Ben'],
-  },
-  {
-    key: 'workExperience',
-    label: 'стаж работы',
-    type: 'text',
-    // rule: [value => value === 'Ben' || 'Should be Ben'],
-  },
-  {
-    key: 'department',
-    label: 'отдел',
-    type: 'text',
-    // rule: [value => value === 'Ben' || 'Should be Ben'],
-  },
-  {
-    key: 'position',
-    label: 'должность',
-    type: 'text',
-    // rule: [value => value === 'Ben' || 'Should be Ben'],
-  },
-  {
-    key: 'level',
-    label: 'уровень',
-    type: 'text',
-    // rule: [value => value === 'Ben' || 'Should be Ben'],
-  },
-  {
-    key: 'status',
-    label: 'статус',
-    type: 'text',
-    // rule: [value => value === 'Ben' || 'Should be Ben'],
-  },
-  {
-    key: 'dateOfDismissal',
-    label: 'дата увольнения',
-    type: 'text',
-    // rule: [value => value === 'Ben' || 'Should be Ben'],
-  },
-  {
-    key: 'reasonForDismissal',
-    label: 'причина увольнения',
-    type: 'text',
-    // rule: [value => value === 'Ben' || 'Should be Ben'],
-  },
-  {
-    key: 'categoryOfDismissal',
-    label: 'категория увольнения',
-    type: 'text',
-    // rule: [value => value === 'Ben' || 'Should be Ben'],
-  },
-];
-
-import { EmployeeApi } from '../../api/employee/EmployeeApi';
-import cloneDeep from 'lodash.clonedeep';
-
 class Employee {
   // получение списка сотрудников
   static async getEmployees(filter, page, perPage) {
     for (let key in filter) {
       delete filter[key].iconName;
       delete filter[key].label;
-      if (filter[key].type !== 'number_inequality' && filter[key].value.trim() === '') {
+      if (filter[key].type !== 'number_inequality' && filter[key].value === '') {
         delete filter[key];
       } else if (
         filter[key].type === 'number_inequality' &&
@@ -223,6 +168,13 @@ class Employee {
         delete filter[key];
       } else if (filter[key].type === 'list') {
         delete filter[key].listItems;
+      } else if (filter[key].type.includes('date')) {
+        if (!filter[key]?.value || filter[key]?.value.length < 1) {
+          delete filter[key];
+        } else {
+          filter[key].value = filter[key].value.toLocaleDateString();
+          console.log(filter[key].value);
+        }
       }
     }
 
@@ -233,18 +185,19 @@ class Employee {
     });
   }
 
-  // получение сотрудника по id
-  static async getEmployeeById(id) {
-    // TODO with API
-    console.log(id);
-    // return employees.find(x => x.id === id);
+  static async createEmployee(data) {
+    return await EmployeeApi.createEmployee(data);
   }
 
   // удаление сотрудников по id
-  static async deleteEmployeesByIds(ids) {
-    // TODO with API
-    console.log(ids);
+  static async deleteEmployeesByIds(data) {
+    return await EmployeeApi.deleteEmployees(data);
+  }
+
+  // получение сотрудника по id
+  static async getEmployeeById(id) {
+    return await EmployeeApi.getEmployee(id);
   }
 }
 
-export { emptyEmployeeRequest, employeeForm, filter, columns, Employee };
+export { emptyEmployeeRequest, dataColumns, filter, columns, Employee };

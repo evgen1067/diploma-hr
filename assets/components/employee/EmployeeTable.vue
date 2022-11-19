@@ -6,15 +6,36 @@
       </va-content>
       <va-form ref="form" tag="form" @validation="validation = $event" @submit.prevent="handleSubmit">
         <div class="d-flex flex-column">
-          <va-input
-            v-for="(inpInfo, key) in form"
-            :key="key"
-            v-model="request[inpInfo.key]"
-            :label="inpInfo.label"
-            :rules="inpInfo?.rule ? inpInfo?.rule : []"
-            :type="inpInfo.type"
-            class="mb-3"
-          ></va-input>
+          <template v-for="(inpInfo, key) in form" :key="key">
+            <va-input
+              v-if="inpInfo.datatype === 'string'"
+              v-model="request[inpInfo.key]"
+              :label="inpInfo.label"
+              :rules="inpInfo?.rule ? inpInfo?.rule : []"
+              class="mb-3"
+              type="text"
+            ></va-input>
+            <va-input
+              v-if="inpInfo.datatype === 'date'"
+              v-model="request[inpInfo.key]"
+              :label="inpInfo.label"
+              :rules="inpInfo?.rule ? inpInfo?.rule : []"
+              class="mb-3"
+              type="date"
+            ></va-input>
+            <va-select
+              v-if="inpInfo.datatype === 'list'"
+              v-model="request[inpInfo.key]"
+              :label="inpInfo.label"
+              :options="inpInfo.listItems"
+              :rules="inpInfo?.rule ? inpInfo?.rule : []"
+              text-by="label"
+              value-by="num"
+              class="w-100 mb-3"
+              clearable
+              color="#6D39CC"
+            ></va-select>
+          </template>
           <va-button type="submit" class="mb-3"> Создать </va-button>
         </div>
       </va-form>
@@ -43,7 +64,7 @@
       :striped="true"
       :wrapper-size="tableSettings.wrapperSize"
       items-track-by="id"
-      selected-color="#44296b"
+      selected-color="#6D39CC"
       sticky-header
       virtual-scroller
       @selectionChange="table.selectedItems = $event.currentSelectedItems"
@@ -60,6 +81,9 @@
                   :label="tableFilter.filter[col.key].label"
                   class="w-100"
                   @change="search"
+                  v-if="col.datatype !== 'date'"
+                  clearable
+                  @clear="search"
                 >
                   <template #prependInner>
                     <font-awesome-icon :icon="tableFilter.filter[col.key].iconName" />
@@ -81,6 +105,37 @@
                     </ul>
                   </template>
                 </va-input>
+                <va-date-input
+                  v-else
+                  v-model="tableFilter.filter[col.key].value"
+                  :label="tableFilter.filter[col.key].label"
+                  class="w-100"
+                  manual-input
+                  clearable
+                  @update:model-value="search"
+                  @clear="search"
+                  :reset-on-close="false"
+                >
+                  <template #prependInner>
+                    <font-awesome-icon :icon="tableFilter.filter[col.key].iconName" />
+                  </template>
+                  <template #prepend>
+                    <va-icon
+                      :id="`${col.key}--dropdown`"
+                      class="cursor-pointer ml-1 mr-1"
+                      data-bs-toggle="dropdown"
+                      name="filter_list"
+                    />
+                    <ul class="dropdown-menu" :aria-labelledby="`${col.key}--dropdown`">
+                      <li v-for="(fil, filKey) in filtersList[col.datatype]" :key="filKey">
+                        <a class="dropdown-item cursor-pointer" @click="changeFilter(col.key, fil)">
+                          <font-awesome-icon :icon="fil.iconName" />
+                          {{ fil.label }}
+                        </a>
+                      </li>
+                    </ul>
+                  </template>
+                </va-date-input>
               </template>
               <div class="d-flex align-items-center" v-else>
                 <va-input
@@ -88,6 +143,8 @@
                   label="От"
                   class="number_inequality mr-2"
                   @change="search"
+                  @clear="search"
+                  clearable
                 >
                   <template #prepend>
                     <va-icon
@@ -112,6 +169,8 @@
                   label="До"
                   class="number_inequality ml-2"
                   @change="search"
+                  @clear="search"
+                  clearable
                 >
                 </va-input>
               </div>
@@ -152,9 +211,19 @@
 </template>
 
 <script>
-import { VaButton, VaContent, VaDataTable, VaForm, VaIcon, VaInput, VaPagination, VaSelect } from 'vuestic-ui';
+import {
+  VaButton,
+  VaContent,
+  VaDataTable,
+  VaDateInput,
+  VaForm,
+  VaIcon,
+  VaInput,
+  VaPagination,
+  VaSelect,
+} from 'vuestic-ui';
 import HrModal from '../../ui/hrModal/HrModal';
-import { employeeForm, emptyEmployeeRequest, columns, filter, Employee } from './Employee';
+import { dataColumns, emptyEmployeeRequest, columns, filter, Employee } from './Employee';
 import { filtersList } from './Filters';
 import HrSpinner from '../../ui/hrSpinner/HrSpinner';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
@@ -162,6 +231,7 @@ import cloneDeep from 'lodash.clonedeep';
 export default {
   name: 'EmployeeTable',
   components: {
+    VaDateInput,
     VaSelect,
     VaIcon,
     FontAwesomeIcon,
@@ -242,11 +312,41 @@ export default {
       this.table.selectedItems = [];
       this.loading = false;
 
-      this.$vaToast.init({
-        message: 'Данные загружены',
-        color: 'success',
-        position: 'bottom-right',
-      });
+      if (this.table.items.length) {
+        this.$vaToast.init({
+          message: 'Данные загружены',
+          color: 'success',
+          position: 'bottom-right',
+        });
+      } else {
+        this.$vaToast.init({
+          message: 'Данных не найдено',
+          color: 'warning',
+          position: 'bottom-right',
+        });
+      }
+    },
+    // удаление выбранных сотрудников
+    async deleteEmployees() {
+      if (this.table.selectedItems && this.table.selectedItems.length) {
+        if (confirm('Вы уверены, что желаете удалить выбранных сотрудников?')) {
+          this.loading = true;
+          await Employee.deleteEmployeesByIds(this.table.selectedItems);
+          await this.updateTableData(this.filter);
+          this.loading = false;
+          this.$vaToast.init({
+            message: 'Сотрудники успешно удалены',
+            color: 'success',
+            position: 'bottom-right',
+          });
+        }
+      } else {
+        this.$vaToast.init({
+          message: 'Вы не выбрали ни одного сотрудника',
+          color: 'danger',
+          position: 'bottom-right',
+        });
+      }
     },
     // изменение текущего фильтра
     changeFilter(columnKey, filter) {
@@ -265,26 +365,11 @@ export default {
       this.add = true;
       this.modalTitle = 'Создание информации о новом сотруднике';
       this.request = cloneDeep(emptyEmployeeRequest);
-      this.form = cloneDeep(employeeForm);
+      this.form = cloneDeep(dataColumns);
 
       this.$nextTick(() => {
         this.$refs.employeeModal.openModal();
       });
-    },
-    // удаление выбранных сотрудников
-    async deleteEmployees() {
-      if (this.table.selectedItems && this.table.selectedItems.length) {
-        this.loading = true;
-        await Employee.deleteEmployeesByIds(this.table.selectedItems);
-        await this.updateTableData(this.filter);
-        this.loading = false;
-      } else {
-        this.$vaToast.init({
-          message: 'Вы не выбрали ни одного сотрудника',
-          color: 'danger',
-          position: 'bottom-right',
-        });
-      }
     },
     // двойной клик по сотруднику
     async handleDblClick(event) {
@@ -292,18 +377,27 @@ export default {
       this.add = false;
       // получение информации о сотруднике
       this.modalTitle = 'Обновление информации о существующем сотруднике';
-      this.request = await Employee.getEmployeeById(event.item.id);
-      this.form = cloneDeep(employeeForm);
+      let result = await Employee.getEmployeeById(event.item.id);
+      this.form = cloneDeep(dataColumns);
 
       // отключаем лоадер
       this.loading = false;
-      // открываем модальное окно
-      this.$nextTick(() => {
-        this.$refs.employeeModal.openModal();
-      });
+      if (result.status !== 404) {
+        this.request = result;
+        // открываем модальное окно
+        this.$nextTick(() => {
+          this.$refs.employeeModal.openModal();
+        });
+      } else {
+        this.$vaToast.init({
+          message: result.data.message,
+          color: 'success',
+          position: 'bottom-right',
+        });
+      }
     },
     // submit формы
-    handleSubmit() {
+    async handleSubmit() {
       // валидация формы
       this.$refs.form.validate();
 
@@ -312,12 +406,29 @@ export default {
         this.cardLoading = true;
         if (this.add) {
           // создание нового сотрудника
-          // TODO
+          let result = await Employee.createEmployee(this.request);
+          if (result.status === 400) {
+            result.data.forEach(x => {
+              this.$vaToast.init({
+                message: x.message,
+                color: 'danger',
+                position: 'bottom-right',
+              });
+            });
+          } else {
+            this.$vaToast.init({
+              message: result.data.message,
+              color: 'success',
+              position: 'bottom-right',
+            });
+            this.$refs.employeeModal.closeModal();
+          }
         } else {
           // апдейт существующего
           // TODO
         }
         this.cardLoading = false;
+        await this.updateTableData();
       }
     },
   },

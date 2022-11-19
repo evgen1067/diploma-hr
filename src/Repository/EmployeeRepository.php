@@ -138,11 +138,26 @@ class EmployeeRepository extends ServiceEntityRepository
                     }
                 }
             }
+
+            if (isset($item['type']) && $item['type'] === 'date_day') {
+                $query->andWhere('e.' . $key . ' = :param' . $key)
+                    ->setParameter('param' . $key, DateTimeImmutable::createFromFormat('d.m.Y', $item['value']));
+            }
+
+            if (isset($item['type']) && $item['type'] === 'date_before') {
+                $query->andWhere('e.' . $key . ' < :param' . $key)
+                    ->setParameter('param' . $key, DateTimeImmutable::createFromFormat('d.m.Y', $item['value']));
+            }
+
+            if (isset($item['type']) && $item['type'] === 'date_after') {
+                $query->andWhere('e.' . $key . ' > :param' . $key)
+                    ->setParameter('param' . $key, DateTimeImmutable::createFromFormat('d.m.Y', $item['value']));
+            }
         }
         return $query;
     }
 
-    private function getWorkExperience(DateTimeImmutable $dateStart, ?DateTimeImmutable $dateEnd = null)
+    private function getWorkExperience(DateTimeImmutable $dateStart, ?DateTimeImmutable $dateEnd = null): float
     {
         if ($dateEnd === null) {
             $dateEnd = new DateTimeImmutable();
@@ -182,5 +197,24 @@ class EmployeeRepository extends ServiceEntityRepository
             }
         }
         return $table;
+    }
+
+    public function findEmployeeInArray(int $id): array
+    {
+        $query = $this->createQueryBuilder('e');
+
+        $query
+            ->select('e')
+            ->andWhere('e.id = :id')
+            ->setParameter('id', $id);
+        $result = $query->getQuery()->getArrayResult();
+       if (count($result) > 0) {
+           $result = $result[0];
+           $result['dateOfEmployment'] = $result['dateOfEmployment']->format('d.m.Y');
+           if (isset($result['dateOfDismissal'])) {
+               $result['dateOfDismissal'] = $result['dateOfDismissal']->format('d.m.Y');
+           }
+       }
+        return $result;
     }
 }

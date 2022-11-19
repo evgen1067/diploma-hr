@@ -66,19 +66,19 @@ const dateFilters = [
   {
     iconName: 'calendar-day',
     label: 'Дата..',
-    value: '',
+    value: null,
     type: 'date_day',
   },
   {
     iconName: 'calendar-day',
     label: 'Дата до..',
-    value: '',
+    value: null,
     type: 'date_before',
   },
   {
     iconName: 'calendar-day',
     label: 'Дата после..',
-    value: '',
+    value: null,
     type: 'date_after',
   },
 ];
