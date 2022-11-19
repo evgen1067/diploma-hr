@@ -75,7 +75,7 @@ const dataColumns = [
   },
   {
     key: 'workExperience',
-    datatype: 'no',
+    datatype: 'number',
     label: 'Опыт работы',
   },
   {
@@ -197,9 +197,6 @@ for (let i = 0; i < dataColumns.length; i++) {
     tdAlign: 'center',
     thAlign: 'center',
   });
-  if (dataColumns[i].key === 'workExperience') {
-    continue;
-  }
   filter[dataColumns[i].key] =
     dataColumns[i].datatype !== 'list'
       ? cloneDeep(filtersList[dataColumns[i].datatype][0])
