@@ -194,6 +194,11 @@ class Employee {
     return await EmployeeApi.deleteEmployees(data);
   }
 
+  // изменение сотрудника
+  static async editEmployee(data) {
+    return await EmployeeApi.editEmployee(data);
+  }
+
   // получение сотрудника по id
   static async getEmployeeById(id) {
     return await EmployeeApi.getEmployee(id);

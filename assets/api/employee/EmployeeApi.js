@@ -13,6 +13,10 @@ export class EmployeeApi extends Api {
     return this.post('/api/v1/employees/new', data);
   }
 
+  static async editEmployee(data) {
+    return this.put('/api/v1/employees/edit', data);
+  }
+
   static async deleteEmployees(data) {
     return this.post('/api/v1/employees/delete', data);
   }

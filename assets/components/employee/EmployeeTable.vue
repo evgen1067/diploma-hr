@@ -425,7 +425,23 @@ export default {
           }
         } else {
           // апдейт существующего
-          // TODO
+          let result = await Employee.editEmployee(this.request);
+          if (result.status === 400) {
+            result.data.forEach(x => {
+              this.$vaToast.init({
+                message: x.message,
+                color: 'danger',
+                position: 'bottom-right',
+              });
+            });
+          } else {
+            this.$vaToast.init({
+              message: result.data.message,
+              color: 'success',
+              position: 'bottom-right',
+            });
+            this.$refs.employeeModal.closeModal();
+          }
         }
         this.cardLoading = false;
         await this.updateTableData();

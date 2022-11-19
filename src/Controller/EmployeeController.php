@@ -126,25 +126,7 @@ class EmployeeController extends AbstractController
         $reasonForDismissal = $dataForCreate['reasonForDismissal'];
         $categoryOfDismissal = $dataForCreate['categoryOfDismissal'];
 
-        if (!$fullName) {
-            $content[] = ['message' => 'Не указано ФИО'];
-        }
-
-        if (!$dateOfEmployment) {
-            $content[] = ['message' => 'Не указана дата трудоустройства'];
-        }
-
-        if (!$department) {
-            $content[] = ['message' => 'Не указан отдел'];
-        }
-
-        if (!$position) {
-            $content[] = ['message' => 'Не указана должность'];
-        }
-
-        if (!$status) {
-            $content[] = ['message' => 'Не указан статус'];
-        }
+        $content = $this->validEmployee($fullName, $dateOfEmployment, $department, $position, $status);
 
         if (count($content) > 0) {
             $response->setStatusCode(Response::HTTP_BAD_REQUEST);
@@ -185,6 +167,81 @@ class EmployeeController extends AbstractController
     /**
      * @throws JsonException
      */
+    #[Route('/employees/edit', name: 'app_employees_put', methods: ['PUT'])]
+    public function edit(
+        Request $request,
+        EmployeeRepository $employeeRepository
+    ): JsonResponse
+    {
+        $dataForCreate = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
+
+        $response = new JsonResponse();
+
+        $content = [];
+
+        $id = $dataForCreate['id'];
+
+        $fullName = $dataForCreate['fullName'];
+        $dateOfEmployment = $dataForCreate['dateOfEmployment'];
+        $department = $dataForCreate['department'];
+        $position = $dataForCreate['position'];
+        $status = $dataForCreate['status'];
+
+        $dateOfDismissal = $dataForCreate['dateOfDismissal'] ?? null;
+        $reasonForDismissal = $dataForCreate['reasonForDismissal'] ?? null;
+        $categoryOfDismissal = $dataForCreate['categoryOfDismissal'] ?? null;
+
+        $content = $this->validEmployee($fullName, $dateOfEmployment, $department, $position, $status);
+
+        if (count($content) > 0) {
+            $response->setStatusCode(Response::HTTP_BAD_REQUEST);
+            $response->setContent($this->serializer->serialize(
+                $content, 'json'
+            ));
+            return $response;
+        }
+
+        $employee = $employeeRepository->find($id);
+
+        if (!$employee) {
+            $response->setStatusCode(Response::HTTP_NOT_FOUND);
+            $content = $this->serializer->serialize([
+                'message' => 'Сотрудник не найден'
+            ], 'json');
+            $response->setContent($content);
+            return $response;
+        }
+
+        $employee
+            ->setFullName($fullName)
+            ->setDateOfEmployment(\DateTimeImmutable::createFromFormat('d.m.Y', $dateOfEmployment))
+            ->setDepartment($department)
+            ->setPosition($position)
+            ->setStatus($status);
+
+        if ($dateOfDismissal) {
+            $dateOfDismissal = DateTimeImmutable::createFromFormat('d.m.Y', $dateOfDismissal);
+            $employee->setDateOfDismissal($dateOfDismissal);
+        }
+
+        if ($reasonForDismissal) {
+            $employee->setReasonForDismissal($reasonForDismissal);
+        }
+
+        if ($categoryOfDismissal) {
+            $employee->setCategoryOfDismissal($categoryOfDismissal);
+        }
+
+        $employeeRepository->save($employee, true);
+
+        $response->setStatusCode(Response::HTTP_OK);
+        $response->setContent($this->serializer->serialize(['message' => 'Сотрудник успешно изменен'], 'json'));
+        return $response;
+    }
+
+    /**
+     * @throws JsonException
+     */
     #[Route('/employees/delete', name: 'app_employees_delete', methods: ['POST'])]
     public function delete(
         Request $request,
@@ -204,5 +261,32 @@ class EmployeeController extends AbstractController
             'color' => 'success',
         ], 'json'));
         return $response;
+    }
+
+    private function validEmployee($fullName, $dateOfEmployment, $department, $position, $status): array
+    {
+        $content = [];
+
+        if (!$fullName) {
+            $content[] = ['message' => 'Не указано ФИО'];
+        }
+
+        if (!$dateOfEmployment) {
+            $content[] = ['message' => 'Не указана дата трудоустройства'];
+        }
+
+        if (!$department) {
+            $content[] = ['message' => 'Не указан отдел'];
+        }
+
+        if (!$position) {
+            $content[] = ['message' => 'Не указана должность'];
+        }
+
+        if (!$status) {
+            $content[] = ['message' => 'Не указан статус'];
+        }
+
+        return $content;
     }
 }
