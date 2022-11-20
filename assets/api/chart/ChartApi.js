@@ -5,6 +5,10 @@ export class ChartApi extends Api {
     return this.get('/api/v1/layoffs', data);
   }
 
+  static async getTurnoverInfo(data) {
+    return this.get('/api/v1/turnover', data);
+  }
+
   static async getDepartmentsInfo(data) {
     return this.get('/api/v1/departments', data);
   }

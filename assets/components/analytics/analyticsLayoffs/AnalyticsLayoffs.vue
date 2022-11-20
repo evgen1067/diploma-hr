@@ -1,9 +1,6 @@
 <template>
   <template v-if="!loading">
     <div class="d-flex flex-column">
-      <va-content class="content">
-        <h3 class="text-center mb-3">Аналитика причин увольнений</h3>
-      </va-content>
       <div class="d-flex align-items-center filter-container mb-4">
         <div class="row">
           <div class="d-flex flex-row align-items-center">
@@ -58,9 +55,7 @@
 
 <script>
 import { Bar } from 'vue-chartjs';
-import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale } from 'chart.js';
-ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale);
-import { VaContent, VaSelect } from 'vuestic-ui';
+import { VaSelect } from 'vuestic-ui';
 import { ChartApi } from '../../../api/chart/ChartApi';
 import HrSpinner from '../../../ui/hrSpinner/HrSpinner';
 import { defaultConfig } from '../ChartConfig';
@@ -68,8 +63,9 @@ import cloneDeep from 'lodash.clonedeep';
 
 export default {
   name: 'AnalyticsLayoffs',
-  components: { VaSelect, HrSpinner, VaContent, Bar },
+  components: { VaSelect, HrSpinner, Bar },
   async created() {
+    this.chartOptions = defaultConfig;
     await this.updateChartData();
   },
   data: () => ({
@@ -99,14 +95,19 @@ export default {
       this.chartData = await ChartApi.getLayoffsInfo(this.clearFilter());
       this.departmentOptions = await ChartApi.getDepartmentsInfo();
       this.departmentOptions.unshift('По всей компании');
-      this.chartOptions = defaultConfig;
       this.loading = false;
     },
     clearFilter() {
       let filter = cloneDeep(this.filter);
-      if (filter.department === 'По всей компании' || filter.department === '') delete filter.department;
-      if (filter.range === '') delete filter.range;
-      if (filter.work === '') delete filter.work;
+      if (filter.department === 'По всей компании' || filter.department === '') {
+        delete filter.department;
+      }
+      if (filter.range === '') {
+        delete filter.range;
+      }
+      if (filter.work === '') {
+        delete filter.work;
+      }
       return filter;
     },
   },

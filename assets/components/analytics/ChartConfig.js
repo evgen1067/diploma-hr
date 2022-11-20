@@ -19,6 +19,19 @@ export const defaultConfig = {
       boxPadding: 4,
     },
   },
+  datasets: {
+    line: {
+      fill: 'origin',
+      tension: 0.3,
+      borderColor: 'transparent',
+    },
+    bubble: {
+      borderColor: 'transparent',
+    },
+    bar: {
+      borderColor: 'transparent',
+    },
+  },
   maintainAspectRatio: false,
   animation: true,
 };

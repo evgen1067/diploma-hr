@@ -51,6 +51,20 @@ library.add(
   faHouse,
 );
 
+import {
+  Chart as ChartJS,
+  Title,
+  Tooltip,
+  Legend,
+  BarElement,
+  LineElement,
+  LinearScale,
+  PointElement,
+  CategoryScale,
+  Filler,
+} from 'chart.js';
+
+ChartJS.register(Title, Tooltip, Legend, BarElement, LineElement, LinearScale, PointElement, CategoryScale, Filler);
 import './styles/style.css';
 
 const app = withUUID(createApp(App));

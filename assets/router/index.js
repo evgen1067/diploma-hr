@@ -1,8 +1,8 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
 import HomeView from '../views/HomeView';
 import EmployeeView from '../views/EmployeeView';
-import TurnoverRates from '../components/analytics/turnoverRates/TurnoverRates';
-import AnalyticsLayoffs from '../components/analytics/analyticsLayoffs/AnalyticsLayoffs';
+import TurnoverView from '../views/TurnoverView';
+import LayoffsView from '../views/LayoffsView';
 import ForecastingStaffing from '../components/analytics/forecastingStaffing/ForecastingStaffing';
 const routes = [
   {
@@ -18,12 +18,12 @@ const routes = [
   {
     path: '/turnover/rates',
     name: 'turnover_rates',
-    component: TurnoverRates,
+    component: TurnoverView,
   },
   {
     path: '/analytics/layoffs',
     name: 'analytics_layoffs',
-    component: AnalyticsLayoffs,
+    component: LayoffsView,
   },
   {
     path: '/forecasting/staffing',

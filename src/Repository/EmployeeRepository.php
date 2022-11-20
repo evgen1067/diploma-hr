@@ -80,6 +80,12 @@ class EmployeeRepository extends ServiceEntityRepository
         }
     }
 
+    /**
+     * @param QueryBuilder $query
+     * @param array $filter
+     * @return QueryBuilder
+     * Фильтрация
+     */
     private function buildQuery(QueryBuilder $query, array $filter): QueryBuilder
     {
         foreach ($filter as $key => $item) {
@@ -108,49 +114,10 @@ class EmployeeRepository extends ServiceEntityRepository
                     ->setParameter('param' . $key,  '%' . $item['value']);
             }
 
-            # Текст в точности || Число равно
-            if (isset($item['type']) && ($item['type'] === 'text_accuracy' || $item['type'] === 'number_equal' || $item['type'] === 'list')) {
+            # Текст в точности
+            if (isset($item['type']) && ($item['type'] === 'text_accuracy' || $item['type'] === 'list')) {
                 $query->andWhere('e.' . $key . ' = :param' . $key)
                     ->setParameter('param' . $key, $item['value']);
-            }
-
-            # Число не равно
-            if (isset($item['type']) && $item['type'] === 'number_not_equal') {
-                $query->andWhere('e.' . $key . ' != :param' . $key)
-                    ->setParameter('param' . $key, $item['value']);
-            }
-            # Неравенство
-            if (isset($item['type']) && $item['type'] === 'number_inequality') {
-                if (isset($item['valueFrom'], $item['valueTo'])) {
-                    # Строгое неравенство
-                    if (isset($item['isStrict']) && $item['isStrict'] === true) {
-                        if ($item['valueFrom'] !== '' && $item['valueTo'] === '') {
-                            $query->andWhere('e.' . $key . ' > :param' . $key)
-                                ->setParameter('param' . $key, $item['valueFrom']);
-                        } else if ($item['valueTo'] !== '' && $item['valueFrom'] === '') {
-                            $query->andWhere('e.' . $key . ' < :param' . $key)
-                                ->setParameter('param' . $key, $item['valueTo']);
-                        } else if ($item['valueTo'] !== '' && $item['valueFrom'] !== '') {
-                            $query->andWhere('e.' . $key . ' < :param2' . $key . ' AND ' . 'e.' . $key . ' > :param1' . $key)
-                                ->setParameter('param1' . $key, $item['valueFrom'])
-                                ->setParameter('param2' . $key, $item['valueTo']);
-                        }
-                    }
-                    # Нестрогое неравенство
-                    else if (isset($item['isStrict']) && $item['isStrict'] === false) {
-                        if ($item['valueFrom'] !== '' && $item['valueTo'] === '') {
-                            $query->andWhere('e.' . $key . ' >= :param' . $key)
-                                ->setParameter('param' . $key, $item['valueFrom']);
-                        } else if ($item['valueTo'] !== '' && $item['valueFrom'] === '') {
-                            $query->andWhere('e.' . $key . ' <= :param' . $key)
-                                ->setParameter('param' . $key, $item['valueTo']);
-                        } else if ($item['valueTo'] !== '' && $item['valueFrom'] !== '') {
-                            $query->andWhere('e.' . $key . ' BETWEEN :param1' . $key . ' AND :param2' . $key)
-                                ->setParameter('param1' . $key, $item['valueFrom'])
-                                ->setParameter('param2' . $key, $item['valueTo']);
-                        }
-                    }
-                }
             }
 
             if (isset($item['type']) && $item['type'] === 'date_day') {
@@ -171,6 +138,12 @@ class EmployeeRepository extends ServiceEntityRepository
         return $query;
     }
 
+    /**
+     * @param DateTimeImmutable $dateStart
+     * @param DateTimeImmutable|null $dateEnd
+     * @return float
+     * Получение опыта работы
+     */
     private function getWorkExperience(DateTimeImmutable $dateStart, ?DateTimeImmutable $dateEnd = null): float
     {
         if ($dateEnd === null) {
@@ -180,6 +153,11 @@ class EmployeeRepository extends ServiceEntityRepository
         return round(fdiv($interval->days, 365.0), 2);
     }
 
+    /**
+     * @param array|null $filter
+     * @return array
+     * Получение таблицы сотрудников
+     */
     public function getTableData(array|null $filter): array
     {
         $query = $this->createQueryBuilder('e');
@@ -197,6 +175,10 @@ class EmployeeRepository extends ServiceEntityRepository
          */
         $table = $query->getQuery()->getArrayResult();
 
+        $resultSet = [];
+
+        $numberFilter = false;
+
         foreach ($table as $key => $item) {
             $table[$key]['workExperience'] = $this->getWorkExperience(
                 $item['dateOfEmployment'],
@@ -209,10 +191,77 @@ class EmployeeRepository extends ServiceEntityRepository
                 $table[$key]['reasonForDismissal'] = self::REASON_TYPES[$table[$key]['reasonForDismissal']];
                 $table[$key]['categoryOfDismissal'] = self::CATEGORY_TYPE[$table[$key]['categoryOfDismissal']];
             }
+
+            $filterWork = $filter['workExperience'] ?? null;
+
+            # Число не равно
+            if (isset($filterWork['type']) && $filterWork['type'] === 'number_equal') {
+                $numberFilter = true;
+                $value = $filterWork['value'];
+                if ($table[$key]['workExperience'] == $value) {
+                    $resultSet[] = $table[$key];
+                }
+            }
+
+            # Число не равно
+            else if (isset($filterWork['type']) && $filterWork['type'] === 'number_not_equal') {
+                $numberFilter = true;
+                $value = $filterWork['value'];
+                if ($table[$key]['workExperience'] != $value) {
+                    $resultSet[] = $table[$key];
+                }
+            }
+
+            # Неравенство
+            else if (isset($filterWork['type'], $filterWork['valueFrom'], $filterWork['valueTo']) && $filterWork['type'] === 'number_inequality') {
+                $numberFilter = true;
+                if (isset($filterWork['isStrict'])) {
+                    if ($filterWork['valueFrom'] !== '' && $filterWork['valueTo'] === '') {
+                        $valueFrom = $filterWork['valueFrom'];
+                        if ($table[$key]['workExperience'] > $valueFrom && $filterWork['isStrict'] === true) {
+                            $resultSet[] = $table[$key];
+                        } else if ($table[$key]['workExperience'] >= $valueFrom && $filterWork['isStrict'] === false) {
+                            $resultSet[] = $table[$key];
+                        }
+                    } else if ($filterWork['valueTo'] !== '' && $filterWork['valueFrom'] === '') {
+                        $valueTo = $filterWork['valueTo'];
+                        if ($table[$key]['workExperience'] < $valueTo && $filterWork['isStrict'] === true) {
+                            $resultSet[] = $table[$key];
+                        } else if ($table[$key]['workExperience'] <= $valueTo && $filterWork['isStrict'] === false) {
+                            $resultSet[] = $table[$key];
+                        }
+                    } else if ($filterWork['valueTo'] !== '' && $filterWork['valueFrom'] !== '') {
+                        $valueFrom = $filterWork['valueFrom'];
+                        $valueTo = $filterWork['valueTo'];
+                        if (
+                            $table[$key]['workExperience'] < $valueTo &&
+                            $table[$key]['workExperience'] > $valueFrom &&
+                            $filterWork['isStrict'] === true
+                        ) {
+                            $resultSet[] = $table[$key];
+                        } else if (
+                            $table[$key]['workExperience'] <= $valueTo &&
+                            $table[$key]['workExperience'] >= $valueFrom &&
+                            $filterWork['isStrict'] === false
+                        ) {
+                            $resultSet[] = $table[$key];
+                        }
+                    }
+                }
+            }
         }
+        if ($numberFilter) {
+            return $resultSet;
+        }
+
         return $table;
     }
 
+    /**
+     * @param int $id
+     * @return array
+     * Данные по отдельному сотруднику в виде массива
+     */
     public function findEmployeeInArray(int $id): array
     {
         $query = $this->createQueryBuilder('e');
@@ -232,6 +281,13 @@ class EmployeeRepository extends ServiceEntityRepository
         return $result;
     }
 
+    /**
+     * @param $department
+     * @param $range
+     * @param $work
+     * @return array|array[]
+     * Данные по увольнениям
+     */
     public function findDataForLayoffsChart($department, $range, $work): array
     {
         $query = $this->createQueryBuilder('e');
@@ -342,6 +398,10 @@ class EmployeeRepository extends ServiceEntityRepository
         return $resultData;
     }
 
+    /**
+     * @return array
+     * Список отделов
+     */
     public function findAllDepartments(): array
     {
         $query = $this->createQueryBuilder('e');
@@ -359,5 +419,181 @@ class EmployeeRepository extends ServiceEntityRepository
             $allData[] = $item['department'];
         }
         return $allData;
+    }
+
+    public function findDataForTurnoverRates($valueTo, $valueFrom, $department): array
+    {
+        // Дата начала периода
+        $date = $valueFrom;
+
+        $labels = [];
+        $datasets = [
+            'label' => 'Списочная численность',
+            'backgroundColor' => '#2191FB',
+            'borderWidth' => 1,
+            'data' => [],
+        ];
+
+        if ($department) {
+            $datasets['label'] .= ' в ' . $department;
+        } else {
+            $datasets['label'] .= ' по всей компании';
+        }
+
+        $datasets['label'] .= ' за период с ' . $valueFrom->format('d.m.Y') . ' по ' . $valueTo->format('d.m.Y');
+
+        $query = $this->createQueryBuilder('e');
+        $query->select('e')
+            ->andWhere('e.status != 3');
+        if ($department) {
+            $query->andWhere('e.department = :department')
+                ->setParameter('department', $department);
+        }
+        $result = $query->getQuery()->getArrayResult();
+
+        # количество сотрудников
+        $numberOfEmployees = count($result);
+
+        $query->andWhere('e.status = 2');
+
+        $result = $query->getQuery()->getArrayResult();
+
+        # декрет
+        $numberOfDecreeEmployees = count($result);
+
+        $query = $this->createQueryBuilder('e');
+        $query->andWhere('e.dateOfEmployment >= :dateEmploy')
+            ->setParameter('dateEmploy', $date)
+            ->andWhere('e.dateOfEmployment <= :dateOfEmployment')
+            ->setParameter('dateOfEmployment', $valueTo);
+        if ($department) {
+            $query->andWhere('e.department = :department')
+                ->setParameter('department', $department);
+        }
+        $result = $query->getQuery()->getArrayResult();
+
+        # принято
+        $numberOfAcceptedEmployees = count($result);
+
+        $query = $this->createQueryBuilder('e');
+
+        $query->andWhere('e.dateOfDismissal >= :dateDis')
+            ->setParameter('dateDis', $date)
+            ->andWhere('e.dateOfDismissal <= :dateOfDismissal')
+            ->setParameter('dateOfDismissal', $valueTo);
+        if ($department) {
+            $query->andWhere('e.department = :department')
+                ->setParameter('department', $department);
+        }
+        $result = $query->getQuery()->getArrayResult();
+
+        # уволено
+        $numberOfDismissedEmployees = count($result);
+
+        $dateStart = $valueTo;
+
+        $query = $this->createQueryBuilder('e');
+
+        $query->andWhere('e.dateOfDismissal >= :dateDis')
+            ->setParameter('dateDis', $date)
+            ->andWhere('e.dateOfDismissal <= :dateOfDismissal')
+            ->setParameter('dateOfDismissal', $valueTo);
+        if ($department) {
+            $query->andWhere('e.department = :department')
+                ->setParameter('department', $department);
+        }
+        $result = $query->getQuery()->getArrayResult();
+
+        $numberOfAverageEmployees = 0;
+        $count = 0;
+        $intermediateIncrement = $numberOfEmployees - $numberOfDecreeEmployees;
+        while ($dateStart >= $date) {
+            $count++;
+            $currentIncrement = $intermediateIncrement;
+
+            foreach ($result as $item) {
+                if (
+                    $item['dateOfDismissal'] > $dateStart
+                ) {
+                    $currentIncrement++;
+                }
+            }
+            $numberOfAverageEmployees += $currentIncrement;
+            $labels[] = $dateStart->format('d.m.Y');
+            $datasets['data'][] = $currentIncrement;
+            $dateStart = $dateStart->modify('-1 day');
+        }
+        $datasets['data'] = array_reverse($datasets['data']);
+
+        # среднесписочная численность
+        $numberOfAverageEmployees = round(fdiv($numberOfAverageEmployees, $count), 3);
+
+        # коэффициент текучести
+        $turnoverRatio = round(fdiv($numberOfDismissedEmployees, $numberOfAverageEmployees), 3);
+
+        $query = $this->createQueryBuilder('e');
+
+        # кол-во уволенных по собств желанию
+        $query->andWhere('e.dateOfDismissal >= :dateOfDismissal')
+            ->setParameter('dateOfDismissal', $date);
+        if ($department) {
+            $query->andWhere('e.department = :department')
+                ->setParameter('department', $department);
+        }
+
+        $numberVoluntarily = count($query->getQuery()->getArrayResult());
+
+        $query = $this->createQueryBuilder('e');
+
+        # кол-во уволенных по принудительно
+        $query->andWhere('e.dateOfDismissal >= :dateOfDismissal')
+            ->setParameter('dateOfDismissal', $date)
+            ->andWhere('e.dateOfDismissal <= :dateOfDismiss')
+            ->setParameter('dateOfDismiss', $valueTo)
+            ->andWhere('e.categoryOfDismissal = 2');
+        if ($department) {
+            $query->andWhere('e.department = :department')
+                ->andWhere('e.dateOfDismissal <= :dateOfDismiss')
+                ->setParameter('dateOfDismiss', $valueTo)
+                ->setParameter('department', $department);
+        }
+        $numberForced = count($query->getQuery()->getArrayResult());
+
+        $query = $this->createQueryBuilder('e');
+
+        # кол-во уволенных нежелательно
+        $query->andWhere('e.dateOfDismissal >= :dateOfDismissal')
+            ->setParameter('dateOfDismissal', $date)
+            ->andWhere('e.dateOfDismissal <= :dateOfDismiss')
+            ->setParameter('dateOfDismiss', $valueTo)
+            ->andWhere('e.categoryOfDismissal = 3');
+        if ($department) {
+            $query->andWhere('e.department = :department')
+                ->setParameter('department', $department);
+        }
+        $numberUndesirable = count($query->getQuery()->getArrayResult());
+
+        $turnoverVoluntarilyRatio = round(fdiv($numberVoluntarily, $numberOfAverageEmployees), 3);
+        $turnoverForcedRatio = round(fdiv($numberForced, $numberOfAverageEmployees), 3);
+        $turnoverUndesirableRatio = round(fdiv($numberUndesirable, $numberOfAverageEmployees), 3);
+
+        return [
+            'totalNumber' => $numberOfEmployees,
+            'acceptedNumber' => $numberOfAcceptedEmployees,
+            'decreeNumber' => $numberOfDecreeEmployees,
+            'dismissedNumber' => $numberOfDismissedEmployees,
+            'averageNumber' => $numberOfAverageEmployees,
+            'averageNumberDataChart' => [
+                'labels' => array_reverse($labels),
+                'datasets' => [$datasets],
+            ],
+            'turnoverRatio' => $turnoverRatio,
+            'numberVoluntarily' => $numberVoluntarily,
+            'turnoverVoluntarilyRatio' => $turnoverVoluntarilyRatio,
+            'numberForced' => $numberForced,
+            'turnoverForcedRatio' => $turnoverForcedRatio,
+            'numberUndesirable' => $numberUndesirable,
+            'turnoverUndesirableRatio' => $turnoverUndesirableRatio,
+        ];
     }
 }
