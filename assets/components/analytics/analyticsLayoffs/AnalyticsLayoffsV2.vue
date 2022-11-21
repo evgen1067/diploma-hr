@@ -191,15 +191,15 @@ export default {
     clearFilter() {
       let filter = cloneDeep(this.filter);
       if (!filter.valueFrom) {
-        delete filter.valueFrom;
-      } else {
-        filter.valueFrom = filter.valueFrom.toLocaleDateString();
+        filter.valueFrom = new Date();
+        filter.valueFrom.setMonth(filter.valueFrom.getMonth() - 36);
       }
       if (!filter.valueTo) {
-        delete filter.valueTo;
-      } else {
-        filter.valueTo = filter.valueTo.toLocaleDateString();
+        filter.valueFrom = new Date();
       }
+      this.filter = cloneDeep(filter);
+      filter.valueFrom = filter.valueFrom.toLocaleDateString();
+      filter.valueTo = filter.valueTo.toLocaleDateString();
       return filter;
     },
   },
