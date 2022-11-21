@@ -99,6 +99,7 @@
       :striped="true"
       :wrapper-size="tableSettings.wrapperSize"
       items-track-by="id"
+      no-data-html="Сотрудников не найдено"
       selected-color="#4056A1"
       sticky-header
       virtual-scroller
