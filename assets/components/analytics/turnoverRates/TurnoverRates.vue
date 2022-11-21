@@ -1,47 +1,80 @@
 <template>
   <template v-if="!loading">
     <div class="row">
-      <div class="col-12 mb-3">
+      <div class="col-12 mb-3 pr-3 pl-3">
         <div class="d-flex flex-column">
-          <va-content class="d-flex align-items-center mb-2">
-            <va-icon name="settings" />
-            <h5>Настройка</h5>
-          </va-content>
-          <div class="d-flex align-items-center">
-            <va-date-input
-              v-model="filter.valueFrom"
-              label="От"
-              class="mb-3 mr-1 w-100"
-              manual-input
-              clearable
-              @update:model-value="fetchData"
-              @clear="fetchData"
-              :reset-on-close="false"
-            />
-            <va-date-input
-              v-model="filter.valueTo"
-              label="До"
-              class="mb-3 mr-1 w-100"
-              manual-input
-              clearable
-              @update:model-value="fetchData"
-              @clear="fetchData"
-              :reset-on-close="false"
-            />
-            <va-select
-              label="Отдел"
-              v-model="filter.department"
-              :options="departmentOptions"
-              clearable
-              class="mb-3 mr-1 w-100"
-              color="#6D39CC"
-              @update:model-value="fetchData"
-            ></va-select>
+          <div class="d-flex pr-3 pl-3 align-items-center">
+            <div class="col-12 pr-3 pl-3 d-flex flex-row align-items-center">
+              <div class="mr-3 mb-2">
+                <va-popover
+                  icon="info"
+                  color="#4056A1"
+                  title="Дата начала периода"
+                  :hover-out-timeout="30"
+                  :message="`По умолчанию — ${defaultDate.valueFrom}`"
+                  placement="bottom-start"
+                  open
+                >
+                  <va-date-input
+                    v-model="filter.valueFrom"
+                    label="От"
+                    manual-input
+                    clearable
+                    @update:model-value="fetchData"
+                    @clear="fetchData"
+                    :reset-on-close="false"
+                  />
+                </va-popover>
+              </div>
+
+              <div class="mr-3 mb-2">
+                <va-popover
+                  icon="info"
+                  color="#4056A1"
+                  title="Дата конца периода"
+                  :hover-out-timeout="30"
+                  :message="`По умолчанию — ${defaultDate.valueTo}`"
+                  placement="bottom-start"
+                  open
+                >
+                  <va-date-input
+                    v-model="filter.valueTo"
+                    label="До"
+                    manual-input
+                    clearable
+                    @update:model-value="fetchData"
+                    @clear="fetchData"
+                    :reset-on-close="false"
+                  />
+                </va-popover>
+              </div>
+
+              <div class="mr-3 mb-2">
+                <va-popover
+                  icon="info"
+                  color="#4056A1"
+                  title="Фильтрация по компании"
+                  :hover-out-timeout="30"
+                  message="По умолчанию — по всей компании"
+                  placement="bottom-start"
+                  open
+                >
+                  <va-select
+                    label="Отдел"
+                    v-model="filter.department"
+                    :options="departmentOptions"
+                    clearable
+                    color="#4056A1"
+                    @update:model-value="fetchData"
+                  ></va-select>
+                </va-popover>
+              </div>
+            </div>
           </div>
         </div>
       </div>
       <div class="col-12 mb-3">
-        <Line :chart-options="{ ...chartOptions }" :chart-data="chartData" type="line" />
+        <Line class="hr-chart" :chart-options="{ ...chartOptions }" :chart-data="chartData" type="line" />
       </div>
       <div class="col-12">
         <div class="d-flex flex-column">
@@ -71,13 +104,17 @@ import HrSpinner from '../../../ui/hrSpinner/HrSpinner';
 import { ChartApi } from '../../../api/chart/ChartApi';
 import { Line } from 'vue-chartjs';
 import { defaultConfig } from '../ChartConfig';
-import { VaContent, VaDateInput, VaIcon, VaSelect } from 'vuestic-ui';
-import cloneDeep from "lodash.clonedeep";
+import { VaContent, VaDateInput, VaIcon, VaPopover, VaSelect } from 'vuestic-ui';
+import cloneDeep from 'lodash.clonedeep';
 
 export default {
   name: 'TurnoverRates',
-  components: { VaSelect, VaDateInput, VaIcon, VaContent, HrSpinner, Line },
+  components: { VaPopover, VaSelect, VaDateInput, VaIcon, VaContent, HrSpinner, Line },
   data: () => ({
+    defaultDate: {
+      valueFrom: '',
+      valueTo: '',
+    },
     loading: true,
     chartOptions: null,
     turnoverData: null,
@@ -94,6 +131,10 @@ export default {
     this.filter.valueTo = new Date();
     this.filter.valueFrom = new Date();
     this.filter.valueFrom.setMonth(this.filter.valueFrom.getMonth() - 1);
+    this.defaultDate = {
+      valueFrom: this.filter.valueFrom.toLocaleDateString(),
+      valueTo: this.filter.valueTo.toLocaleDateString(),
+    };
     await this.fetchData();
     this.filter.department = this.departmentOptions[0];
   },
@@ -130,4 +171,8 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.hr-chart {
+  height: 340px;
+}
+</style>

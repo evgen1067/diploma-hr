@@ -3,34 +3,94 @@
     <div class="d-flex flex-column">
       <div class="d-flex align-items-center filter-container mb-4">
         <div class="row">
-          <div class="d-flex flex-row align-items-center">
-            <va-select
-              label="Отдел"
-              v-model="filter.department"
-              :options="departmentOptions"
-              clearable
-              class="mb-3 mr-3"
-              color="#6D39CC"
-              @update:model-value="updateChartData"
-            ></va-select>
-            <va-select
-              label="Период"
-              v-model="filter.range"
-              :options="rangeOptions"
-              clearable
-              class="mb-3 mr-3"
-              color="#6D39CC"
-              @update:model-value="updateChartData"
-            ></va-select>
-            <va-select
-              label="Стаж работы"
-              v-model="filter.work"
-              :options="workExpOptions"
-              clearable
-              class="mb-3 mr-3"
-              color="#6D39CC"
-              @update:model-value="updateChartData"
-            ></va-select>
+          <div class="col-12 pr-3 pl-3 flex-column">
+            <div class="col-12 pl-3 pr-3 d-flex flex-row align-items-center">
+              <div class="mr-3 mb-2">
+                <va-popover
+                  icon="info"
+                  color="#4056A1"
+                  title="Дата начала периода"
+                  :hover-out-timeout="30"
+                  :message="`По умолчанию — ${defaultDate.valueFrom}`"
+                  placement="bottom-start"
+                  open
+                >
+                  <va-date-input
+                    v-model="filter.valueFrom"
+                    label="От"
+                    manual-input
+                    clearable
+                    @update:model-value="updateChartData"
+                    @clear="updateChartData"
+                    :reset-on-close="false"
+                  />
+                </va-popover>
+              </div>
+
+              <div class="mr-3 mb-2">
+                <va-popover
+                  icon="info"
+                  color="#4056A1"
+                  title="Дата конца периода"
+                  :hover-out-timeout="30"
+                  :message="`По умолчанию — ${defaultDate.valueTo}`"
+                  placement="bottom-start"
+                  open
+                >
+                  <va-date-input
+                    v-model="filter.valueTo"
+                    label="До"
+                    manual-input
+                    clearable
+                    @update:model-value="updateChartData"
+                    @clear="updateChartData"
+                    :reset-on-close="false"
+                  />
+                </va-popover>
+              </div>
+
+              <div class="mr-3 mb-2">
+                <va-popover
+                  icon="info"
+                  color="#4056A1"
+                  title="Фильтрация по компании"
+                  :hover-out-timeout="30"
+                  message="По умолчанию — по всей компании"
+                  placement="bottom-start"
+                  open
+                >
+                  <va-select
+                    label="Отдел"
+                    v-model="filter.department"
+                    :options="departmentOptions"
+                    clearable
+                    color="#4056A1"
+                    @update:model-value="updateChartData"
+                  ></va-select>
+                </va-popover>
+              </div>
+
+              <div class="mr-3 mb-2">
+                <va-popover
+                  icon="info"
+                  color="#4056A1"
+                  title="Фильтрация по стажу работы"
+                  :hover-out-timeout="30"
+                  message="По умолчанию — не зависит от стажа"
+                  placement="bottom-start"
+                  open
+                >
+                  <va-select
+                    label="Стаж работы"
+                    v-model="filter.work"
+                    :options="workExpOptions"
+                    clearable
+                    color="#4056A1"
+                    @update:model-value="updateChartData"
+                  ></va-select>
+                </va-popover>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -42,6 +102,7 @@
               :key="key"
               :chart-data="data"
               :chart-options="{ ...chartOptions, ...horizontalBarOptions }"
+              class="hr-chart"
             />
           </div>
         </div>
@@ -55,7 +116,7 @@
 
 <script>
 import { Bar } from 'vue-chartjs';
-import { VaSelect } from 'vuestic-ui';
+import { VaDateInput, VaPopover, VaSelect } from 'vuestic-ui';
 import { ChartApi } from '../../../api/chart/ChartApi';
 import HrSpinner from '../../../ui/hrSpinner/HrSpinner';
 import { defaultConfig } from '../ChartConfig';
@@ -63,14 +124,28 @@ import cloneDeep from 'lodash.clonedeep';
 
 export default {
   name: 'AnalyticsLayoffs',
-  components: { VaSelect, HrSpinner, Bar },
+  components: { VaPopover, VaDateInput, VaSelect, HrSpinner, Bar },
   async created() {
     this.chartOptions = defaultConfig;
+    this.filter.valueTo = new Date();
+    this.filter.valueFrom = new Date();
+    this.filter.valueFrom.setMonth(this.filter.valueFrom.getMonth() - 1);
+    this.filter.work = this.workExpOptions[0];
+    this.defaultDate = {
+      valueFrom: this.filter.valueFrom.toLocaleDateString(),
+      valueTo: this.filter.valueTo.toLocaleDateString(),
+    };
     await this.updateChartData();
+    this.filter.department = this.departmentOptions[0];
   },
   data: () => ({
+    defaultDate: {
+      valueFrom: '',
+      valueTo: '',
+    },
     filter: {
-      range: '',
+      valueFrom: '',
+      valueTo: '',
       department: '',
       work: '',
     },
@@ -86,8 +161,7 @@ export default {
       },
     },
     departmentOptions: null,
-    rangeOptions: ['Месяц', 'Квартал', 'Год'],
-    workExpOptions: ['меньше 3х месяцев', 'до 1 года работы', 'до 3х лет работы', 'свыше 3х лет работы'],
+    workExpOptions: ['Не зависит', 'меньше 3х месяцев', 'до 1 года работы', 'до 3х лет работы', 'свыше 3х лет работы'],
   }),
   methods: {
     async updateChartData() {
@@ -99,13 +173,20 @@ export default {
     },
     clearFilter() {
       let filter = cloneDeep(this.filter);
+      if (!filter.valueFrom) {
+        delete filter.valueFrom;
+      } else {
+        filter.valueFrom = filter.valueFrom.toLocaleDateString();
+      }
+      if (!filter.valueTo) {
+        delete filter.valueTo;
+      } else {
+        filter.valueTo = filter.valueTo.toLocaleDateString();
+      }
       if (filter.department === 'По всей компании' || filter.department === '') {
         delete filter.department;
       }
-      if (filter.range === '') {
-        delete filter.range;
-      }
-      if (filter.work === '') {
+      if (filter.work === '' || filter.work === 'Не зависит') {
         delete filter.work;
       }
       return filter;
@@ -117,5 +198,9 @@ export default {
 <style scoped>
 .filter-container {
   margin-top: 20px;
+}
+
+.hr-chart {
+  height: 340px;
 }
 </style>

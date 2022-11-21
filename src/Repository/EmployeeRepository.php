@@ -288,7 +288,7 @@ class EmployeeRepository extends ServiceEntityRepository
      * @return array|array[]
      * Данные по увольнениям
      */
-    public function findDataForLayoffsChart($department, $range, $work): array
+    public function findDataForLayoffsChart($department, $valueTo, $valueFrom, $work): array
     {
         $query = $this->createQueryBuilder('e');
         $query
@@ -308,27 +308,13 @@ class EmployeeRepository extends ServiceEntityRepository
                 ->setParameter('depName', $department);
         }
 
-        if ($range) {
-            if ($range === 'Месяц') {
-                $date = new DateTimeImmutable('-1 month');
-                $query->andWhere('e.dateOfDismissal > :dateDis')
-                    ->setParameter('dateDis', $date);
-                $datasets['label'] .= ' за период с ' . $date->format('d.m.Y');
-            }
-
-            if ($range === 'Квартал') {
-                $date = new DateTimeImmutable('-3 month');
-                $query->andWhere('e.dateOfDismissal > :dateDis')
-                    ->setParameter('dateDis', $date);
-                $datasets['label'] .= ' за период с ' . $date->format('d.m.Y');
-            }
-
-            if ($range === 'Год') {
-                $date = new DateTimeImmutable('-1 year');
-                $query->andWhere('e.dateOfDismissal > :dateDis')
-                    ->setParameter('dateDis', $date);
-                $datasets['label'] .= ' за период с ' . $date->format('d.m.Y');
-            }
+        if ($valueFrom) {
+            $query
+                ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
+                ->setParameter('dateOfDismissal1', $valueFrom)
+                ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
+                ->setParameter('dateOfDismissal2', $valueTo);
+            $datasets['label'] .= ' за период с ' . $valueFrom->format('d.m.Y') . ' по ' . $valueTo->format('d.m.Y');
         }
 
         $reasonData = [];
@@ -423,9 +409,6 @@ class EmployeeRepository extends ServiceEntityRepository
 
     public function findDataForTurnoverRates($valueTo, $valueFrom, $department): array
     {
-        // Дата начала периода
-        $date = $valueFrom;
-
         $labels = [];
         $datasets = [
             'label' => 'Списочная численность',
@@ -442,139 +425,157 @@ class EmployeeRepository extends ServiceEntityRepository
 
         $datasets['label'] .= ' за период с ' . $valueFrom->format('d.m.Y') . ' по ' . $valueTo->format('d.m.Y');
 
+        # количество сотрудников
+        
         $query = $this->createQueryBuilder('e');
-        $query->select('e')
+        $query
+            ->select('e')
             ->andWhere('e.status != 3');
         if ($department) {
-            $query->andWhere('e.department = :department')
+            $query
+                ->andWhere('e.department = :department')
                 ->setParameter('department', $department);
         }
-        $result = $query->getQuery()->getArrayResult();
-
-        # количество сотрудников
-        $numberOfEmployees = count($result);
-
-        $query->andWhere('e.status = 2');
-
-        $result = $query->getQuery()->getArrayResult();
+        $numberOfEmployees = count($query->getQuery()->getArrayResult());
 
         # декрет
-        $numberOfDecreeEmployees = count($result);
-
-        $query = $this->createQueryBuilder('e');
-        $query->andWhere('e.dateOfEmployment >= :dateEmploy')
-            ->setParameter('dateEmploy', $date)
-            ->andWhere('e.dateOfEmployment <= :dateOfEmployment')
-            ->setParameter('dateOfEmployment', $valueTo);
-        if ($department) {
-            $query->andWhere('e.department = :department')
-                ->setParameter('department', $department);
-        }
-        $result = $query->getQuery()->getArrayResult();
+        
+        $query->andWhere('e.status = 2');
+        $numberOfDecreeEmployees = count($query->getQuery()->getArrayResult());
 
         # принято
-        $numberOfAcceptedEmployees = count($result);
-
+        
         $query = $this->createQueryBuilder('e');
-
-        $query->andWhere('e.dateOfDismissal >= :dateDis')
-            ->setParameter('dateDis', $date)
-            ->andWhere('e.dateOfDismissal <= :dateOfDismissal')
-            ->setParameter('dateOfDismissal', $valueTo);
+        $query
+            ->andWhere('e.dateOfEmployment >= :dateOfEmployment1')
+            ->setParameter('dateOfEmployment1', $valueFrom)
+            ->andWhere('e.dateOfEmployment <= :dateOfEmployment2')
+            ->setParameter('dateOfEmployment2', $valueTo);
         if ($department) {
-            $query->andWhere('e.department = :department')
+            $query
+                ->andWhere('e.department = :department')
                 ->setParameter('department', $department);
         }
-        $result = $query->getQuery()->getArrayResult();
+        $numberOfAcceptedEmployees = count($query->getQuery()->getArrayResult());
 
         # уволено
-        $numberOfDismissedEmployees = count($result);
+        
+        $query = $this->createQueryBuilder('e');
+        $query
+            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
+            ->setParameter('dateOfDismissal1', $valueFrom)
+            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
+            ->setParameter('dateOfDismissal2', $valueTo);
+        if ($department) {
+            $query
+                ->andWhere('e.department = :department')
+                ->setParameter('department', $department);
+        }
+        $numberOfDismissedEmployees = count($query->getQuery()->getArrayResult());
 
-        $dateStart = $valueTo;
+        # Среднесписочная численность
+
+        $periodEndDate = $valueTo;
 
         $query = $this->createQueryBuilder('e');
-
-        $query->andWhere('e.dateOfDismissal >= :dateDis')
-            ->setParameter('dateDis', $date)
-            ->andWhere('e.dateOfDismissal <= :dateOfDismissal')
-            ->setParameter('dateOfDismissal', $valueTo);
+        $query
+            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
+            ->setParameter('dateOfDismissal1', $valueFrom)
+            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
+            ->setParameter('dateOfDismissal2', $valueTo);
         if ($department) {
-            $query->andWhere('e.department = :department')
+            $query
+                ->andWhere('e.department = :department')
                 ->setParameter('department', $department);
         }
         $result = $query->getQuery()->getArrayResult();
 
         $numberOfAverageEmployees = 0;
-        $count = 0;
-        $intermediateIncrement = $numberOfEmployees - $numberOfDecreeEmployees;
-        while ($dateStart >= $date) {
-            $count++;
-            $currentIncrement = $intermediateIncrement;
 
+        $numberOfDays = 0;
+
+        $constNumberOfEmployees = $numberOfEmployees - $numberOfDecreeEmployees;
+
+        while ($periodEndDate >= $valueFrom) {
+            $numberOfDays++;
+            $currentIncrement = $constNumberOfEmployees;
+            # пробег по уволенным сотрудникам
             foreach ($result as $item) {
-                if (
-                    $item['dateOfDismissal'] > $dateStart
-                ) {
+                if ($item['dateOfDismissal'] > $periodEndDate) {
                     $currentIncrement++;
                 }
             }
             $numberOfAverageEmployees += $currentIncrement;
-            $labels[] = $dateStart->format('d.m.Y');
+            $labels[] = $periodEndDate->format('d.m.Y');
             $datasets['data'][] = $currentIncrement;
-            $dateStart = $dateStart->modify('-1 day');
+            $periodEndDate = $periodEndDate->modify('-1 day');
         }
         $datasets['data'] = array_reverse($datasets['data']);
 
-        # среднесписочная численность
-        $numberOfAverageEmployees = round(fdiv($numberOfAverageEmployees, $count), 3);
+        $numberOfAverageEmployees = round(fdiv($numberOfAverageEmployees, $numberOfDays), 3);
 
         # коэффициент текучести
+
         $turnoverRatio = round(fdiv($numberOfDismissedEmployees, $numberOfAverageEmployees), 3);
 
-        $query = $this->createQueryBuilder('e');
-
         # кол-во уволенных по собств желанию
-        $query->andWhere('e.dateOfDismissal >= :dateOfDismissal')
-            ->setParameter('dateOfDismissal', $date);
+
+        $query = $this->createQueryBuilder('e');
+        $query
+            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
+            ->setParameter('dateOfDismissal1', $valueFrom)
+            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
+            ->setParameter('dateOfDismissal2', $valueTo);
         if ($department) {
-            $query->andWhere('e.department = :department')
+            $query
+                ->andWhere('e.department = :department')
                 ->setParameter('department', $department);
         }
 
         $numberVoluntarily = count($query->getQuery()->getArrayResult());
 
-        $query = $this->createQueryBuilder('e');
-
         # кол-во уволенных по принудительно
-        $query->andWhere('e.dateOfDismissal >= :dateOfDismissal')
-            ->setParameter('dateOfDismissal', $date)
-            ->andWhere('e.dateOfDismissal <= :dateOfDismiss')
-            ->setParameter('dateOfDismiss', $valueTo)
+
+        $query = $this->createQueryBuilder('e');
+        $query
+            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
+            ->setParameter('dateOfDismissal1', $valueFrom)
+            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
+            ->setParameter('dateOfDismissal2', $valueTo)
             ->andWhere('e.categoryOfDismissal = 2');
         if ($department) {
-            $query->andWhere('e.department = :department')
-                ->andWhere('e.dateOfDismissal <= :dateOfDismiss')
-                ->setParameter('dateOfDismiss', $valueTo)
+            $query
+                ->andWhere('e.department = :department')
                 ->setParameter('department', $department);
         }
         $numberForced = count($query->getQuery()->getArrayResult());
 
-        $query = $this->createQueryBuilder('e');
-
         # кол-во уволенных нежелательно
-        $query->andWhere('e.dateOfDismissal >= :dateOfDismissal')
-            ->setParameter('dateOfDismissal', $date)
-            ->andWhere('e.dateOfDismissal <= :dateOfDismiss')
-            ->setParameter('dateOfDismiss', $valueTo)
+
+        $query = $this->createQueryBuilder('e');
+        $query
+            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
+            ->setParameter('dateOfDismissal1', $valueFrom)
+            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
+            ->setParameter('dateOfDismissal2', $valueTo)
             ->andWhere('e.categoryOfDismissal = 3');
         if ($department) {
-            $query->andWhere('e.department = :department')
+            $query
+                ->andWhere('e.department = :department')
                 ->setParameter('department', $department);
         }
         $numberUndesirable = count($query->getQuery()->getArrayResult());
 
+        # коэффициент добровольной текучести
+
         $turnoverVoluntarilyRatio = round(fdiv($numberVoluntarily, $numberOfAverageEmployees), 3);
+
+        # коэффициент принудительной текучести
+
         $turnoverForcedRatio = round(fdiv($numberForced, $numberOfAverageEmployees), 3);
+
+        # коэффициент нежелательной текучести
+
         $turnoverUndesirableRatio = round(fdiv($numberUndesirable, $numberOfAverageEmployees), 3);
 
         return [

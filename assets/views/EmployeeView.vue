@@ -1,6 +1,6 @@
 <template>
   <va-content class="content">
-    <h3 class="fw-bold text-center">Управление сотрудниками</h3>
+    <h3 class="fw-bolder text-center">Управление сотрудниками</h3>
   </va-content>
   <employee-table />
 </template>

@@ -1,6 +1,6 @@
 <template>
   <va-content class="content">
-    <h3>Показатели текучести</h3>
+    <h3 class="fw-bolder text-center">Показатели текучести</h3>
   </va-content>
   <turnover-rates />
 </template>

@@ -27,10 +27,21 @@ class ChartController extends AbstractController
     ): JsonResponse
     {
         $department = $request->query->get('department');
-        $range = $request->query->get('range');
+        $valueTo = $request->query->get('valueTo');
+        if ($valueTo) {
+            $valueTo = \DateTimeImmutable::createFromFormat('d.m.Y', $valueTo);
+        } else {
+            $valueTo = new \DateTimeImmutable();
+        }
+        $valueFrom = $request->query->get('valueFrom');
+        if ($valueFrom) {
+            $valueFrom = \DateTimeImmutable::createFromFormat('d.m.Y', $valueFrom);
+        } else {
+            $valueFrom = new \DateTimeImmutable('-1 month');
+        }
         $work = $request->query->get('work');
 
-        $result = $employeeRepository->findDataForLayoffsChart($department, $range, $work);
+        $result = $employeeRepository->findDataForLayoffsChart($department, $valueTo, $valueFrom, $work);
         $response = new JsonResponse();
         $response->setStatusCode(Response::HTTP_OK);
         $response->setContent($this->serializer->serialize($result, 'json'));

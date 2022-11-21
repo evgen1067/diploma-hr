@@ -3,7 +3,7 @@ import HomeView from '../views/HomeView';
 import EmployeeView from '../views/EmployeeView';
 import TurnoverView from '../views/TurnoverView';
 import LayoffsView from '../views/LayoffsView';
-import ForecastingStaffing from '../components/analytics/forecastingStaffing/ForecastingStaffing';
+import ForecastView from '../views/ForecastView';
 const routes = [
   {
     path: '/',
@@ -28,7 +28,7 @@ const routes = [
   {
     path: '/forecasting/staffing',
     name: 'forecasting_staffing',
-    component: ForecastingStaffing,
+    component: ForecastView,
   },
 ];
 

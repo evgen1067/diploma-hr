@@ -4,7 +4,7 @@
       <template v-for="(item, key) in routes" :key="key">
         <va-sidebar-item
           :active="isRouteActive(item.routeName)"
-          active-color="#6D39CC"
+          active-color="#4056A1"
           @click="toRoute(item.routeName)"
         >
           <va-sidebar-item-content>

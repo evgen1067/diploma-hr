@@ -1,65 +1,93 @@
 <template>
   <hr-modal ref="employeeModal" v-if="form && form.length">
     <template v-if="!cardLoading">
-      <div class="d-flex flex-column">
-        <div class="row">
-          <div class="col-6">
-            <img src="@/assets/employee.png" class="w-100" alt="">
-          </div>
-          <div class="col-6">
-            <va-content class="content">
-              <h4>{{ modalTitle }}</h4>
-            </va-content>
-            <va-form ref="form" tag="form" @validation="validation = $event" @submit.prevent="handleSubmit">
-              <template v-for="(inpInfo, key) in form" :key="key">
-                <va-input
-                  v-if="inpInfo.datatype === 'string'"
-                  v-model="request[inpInfo.key]"
-                  :label="inpInfo.label"
-                  :rules="inpInfo?.rule ? inpInfo?.rule : []"
-                  class="w-100 mb-3"
-                  type="text"
-                ></va-input>
-                <va-input
-                  v-if="inpInfo.datatype === 'date'"
-                  v-model="request[inpInfo.key]"
-                  :label="inpInfo.label"
-                  :rules="inpInfo?.rule ? inpInfo?.rule : []"
-                  class="w-100 mb-3"
-                  type="date"
-                ></va-input>
-                <va-select
-                  v-if="inpInfo.datatype === 'list'"
-                  v-model="request[inpInfo.key]"
-                  :label="inpInfo.label"
-                  :options="inpInfo.listItems"
-                  :rules="inpInfo?.rule ? inpInfo?.rule : []"
-                  text-by="label"
-                  value-by="num"
-                  class="w-100 mb-3"
-                  clearable
-                  color="#6D39CC"
-                ></va-select>
-              </template>
-              <va-button type="submit" class="w-100 mb-3"> Создать </va-button>
-            </va-form>
-          </div>
-        </div>
-      </div>
+      <va-content class="content">
+        <h4>{{ modalTitle }}</h4>
+      </va-content>
+      <va-form ref="form" tag="form" @validation="validation = $event" @submit.prevent="handleSubmit">
+        <template v-for="(inpInfo, key) in form" :key="key">
+          <va-input
+            v-if="inpInfo.datatype === 'string'"
+            v-model="request[inpInfo.key]"
+            :label="inpInfo.label"
+            :rules="inpInfo?.rule ? inpInfo?.rule : []"
+            class="w-100 mb-3"
+            type="text"
+          ></va-input>
+          <va-input
+            v-if="inpInfo.datatype === 'date'"
+            v-model="request[inpInfo.key]"
+            :label="inpInfo.label"
+            :rules="inpInfo?.rule ? inpInfo?.rule : []"
+            class="w-100 mb-3"
+            type="date"
+          ></va-input>
+          <va-select
+            v-if="inpInfo.datatype === 'list'"
+            v-model="request[inpInfo.key]"
+            :label="inpInfo.label"
+            :options="inpInfo.listItems"
+            :rules="inpInfo?.rule ? inpInfo?.rule : []"
+            text-by="label"
+            value-by="num"
+            class="w-100 mb-3"
+            clearable
+            color="#4056A1"
+          ></va-select>
+        </template>
+        <va-button type="submit" class="w-100 mb-3"> Создать </va-button>
+      </va-form>
     </template>
     <hr-spinner v-else />
   </hr-modal>
   <template v-if="!loading">
-    <div class="d-flex align-center">
-      <va-button class="mr-3 mb-2" color="primary" icon="person_add" @click="showAddEmployeeModal">Добавить</va-button>
-      <va-button class="mr-3 mb-2" color="danger" icon="clear" @click="deleteEmployees">Удалить</va-button>
-      <va-select
-        v-model="tablePaginator.perPage"
-        :label="`Показать записи (${tablePaginator.perPage})`"
-        :options="countRowsOptions"
-        class="mr-3 mb-2"
-        color="#6D39CC"
-      />
+    <div class="d-flex align-content-center">
+      <div class="mr-3 mb-2">
+        <va-popover
+          icon="info"
+          color="#4056A1"
+          title="Создание сотрудника"
+          :hover-out-timeout="30"
+          message="Нажмите, чтобы открыть окно для создания сотрудника"
+          placement="bottom-start"
+          open
+        >
+          <va-button color="#4056A1" icon="person_add" @click="showAddEmployeeModal">Добавить</va-button>
+        </va-popover>
+      </div>
+      <div class="mr-3 mb-2">
+        <va-popover
+          icon="info"
+          color="#4056A1"
+          title="Удаление сотрудника"
+          :hover-out-timeout="30"
+          message="Выберите с помощью чекбоксов удаляемых сотрудников и нажмите кнопку"
+          placement="bottom-start"
+          open
+        >
+          <va-button color="#F13C20" icon="clear" @click="deleteEmployees">Удалить</va-button>
+        </va-popover>
+      </div>
+
+      <div class="mr-3 mb-2">
+        <va-popover
+          icon="info"
+          color="#4056A1"
+          title="Количество записей"
+          :hover-out-timeout="30"
+          message="Выберите количество записей, показываемых в таблице"
+          placement="bottom-start"
+          open
+        >
+          <va-select
+            v-model="tablePaginator.perPage"
+            :label="`Показать записи (${tablePaginator.perPage})`"
+            :options="countRowsOptions"
+            class="mr-3 mb-2"
+            color="#4056A1"
+          />
+        </va-popover>
+      </div>
     </div>
     <va-data-table
       :animated="true"
@@ -71,7 +99,7 @@
       :striped="true"
       :wrapper-size="tableSettings.wrapperSize"
       items-track-by="id"
-      selected-color="#6D39CC"
+      selected-color="#4056A1"
       sticky-header
       virtual-scroller
       @selectionChange="table.selectedItems = $event.currentSelectedItems"
@@ -190,7 +218,7 @@
                     ? tableFilter.filter[col.key].listItems.find(x => x.num === tableFilter.filter[col.key].value).label
                     : 'Выбор'
                 "
-                color="#6D39CC"
+                color="#4056A1"
                 class="w-100"
                 :options="tableFilter.filter[col.key].listItems"
                 text-by="label"
@@ -206,10 +234,10 @@
     <div class="table-example--pagination">
       <va-pagination v-model="tablePaginator.page" input :pages="pages">
         <template #prevPageLink="{ onClick, disabled }">
-          <va-button :disabled="disabled" aria-label="go prev page" outline @click="onClick">Назад</va-button>
+          <va-button color="#4056A1" :disabled="disabled" aria-label="go prev page" outline @click="onClick">Назад</va-button>
         </template>
         <template #nextPageLink="{ onClick, disabled }">
-          <va-button :disabled="disabled" aria-label="go next page" outline @click="onClick">Далее</va-button>
+          <va-button color="#4056A1" :disabled="disabled" aria-label="go next page" outline @click="onClick">Далее</va-button>
         </template>
       </va-pagination>
     </div>
@@ -227,6 +255,7 @@ import {
   VaIcon,
   VaInput,
   VaPagination,
+  VaPopover,
   VaSelect,
 } from 'vuestic-ui';
 import HrModal from '../../ui/hrModal/HrModal';
@@ -238,6 +267,7 @@ import cloneDeep from 'lodash.clonedeep';
 export default {
   name: 'EmployeeTable',
   components: {
+    VaPopover,
     VaDateInput,
     VaSelect,
     VaIcon,
