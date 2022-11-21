@@ -2,15 +2,15 @@
   <va-content class="content">
     <h3 class="fw-bolder text-center">Аналитика причин увольнений</h3>
   </va-content>
-  <analytics-layoffs />
+  <analytics-layoffs-v2 />
 </template>
 
 <script>
-import AnalyticsLayoffs from '../components/analytics/analyticsLayoffs/AnalyticsLayoffs';
 import { VaContent } from 'vuestic-ui';
+import AnalyticsLayoffsV2 from '../components/analytics/analyticsLayoffs/AnalyticsLayoffsV2';
 export default {
   name: 'LayoffsView',
-  components: { VaContent, AnalyticsLayoffs },
+  components: { AnalyticsLayoffsV2, VaContent },
 };
 </script>
 

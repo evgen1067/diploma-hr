@@ -2,7 +2,7 @@ import { Api } from '../Api';
 
 export class ChartApi extends Api {
   static async getLayoffsInfo(data) {
-    return this.get('/api/v1/layoffs', data);
+    return this.get('/api/v1/chart-layoffs', data);
   }
 
   static async getTurnoverInfo(data) {

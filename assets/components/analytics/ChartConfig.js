@@ -1,20 +1,44 @@
 export const defaultConfig = {
+  responsive: true,
+  scales: {
+    y: {
+      ticks: {
+        display: true,
+        font: {
+          fontSize: 12,
+          family: 'Montserrat Alternates',
+        },
+      },
+    },
+    x: {
+      ticks: {
+        display: true,
+        font: {
+          fontSize: 8,
+          family: 'Montserrat Alternates',
+        },
+      },
+    },
+  },
   plugins: {
     legend: {
       position: 'bottom',
       labels: {
         font: {
-          color: '#34495e',
-          family: 'sans-serif',
+          family: 'Montserrat Alternates',
           size: 14,
         },
         usePointStyle: true,
       },
     },
     tooltip: {
+      titleFont: {
+        size: 14,
+        family: 'Montserrat Alternates',
+      },
       bodyFont: {
         size: 14,
-        family: 'sans-serif',
+        family: 'Montserrat Alternates',
       },
       boxPadding: 4,
     },
@@ -35,3 +59,4 @@ export const defaultConfig = {
   maintainAspectRatio: false,
   animation: true,
 };
+

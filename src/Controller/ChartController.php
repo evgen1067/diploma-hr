@@ -72,4 +72,30 @@ class ChartController extends AbstractController
         $response->setContent($this->serializer->serialize($result, 'json'));
         return $response;
     }
+
+    #[Route('/chart-layoffs', name: 'app_turnover_chart', methods: ['GET'])]
+    public function chart(
+        Request $request,
+        EmployeeRepository $employeeRepository
+    ): JsonResponse
+    {
+        $valueTo = $request->query->get('valueTo');
+        if ($valueTo) {
+            $valueTo = \DateTimeImmutable::createFromFormat('d.m.Y', $valueTo);
+        } else {
+            $valueTo = new \DateTimeImmutable();
+        }
+        $valueFrom = $request->query->get('valueFrom');
+        if ($valueFrom) {
+            $valueFrom = \DateTimeImmutable::createFromFormat('d.m.Y', $valueFrom);
+        } else {
+            $valueFrom = new \DateTimeImmutable('-1 month');
+        }
+
+        $result = $employeeRepository->findDataLayoffsChart($valueTo, $valueFrom);
+        $response = new JsonResponse();
+        $response->setStatusCode(Response::HTTP_OK);
+        $response->setContent($this->serializer->serialize($result, 'json'));
+        return $response;
+    }
 }
