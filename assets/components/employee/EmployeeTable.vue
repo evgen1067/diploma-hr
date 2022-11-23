@@ -4,7 +4,7 @@
       <va-content class="content">
         <h4>{{ modalTitle }}</h4>
       </va-content>
-      <va-form ref="form" tag="form" @validation="validation = $event" @submit.prevent="handleSubmit">
+      <va-form ref="form" tag="form" @submit.prevent="handleSubmit">
         <template v-for="(inpInfo, key) in form" :key="key">
           <va-input
             v-if="inpInfo.datatype === 'string'"
@@ -235,10 +235,14 @@
     <div class="table-example--pagination">
       <va-pagination v-model="tablePaginator.page" input :pages="pages">
         <template #prevPageLink="{ onClick, disabled }">
-          <va-button color="#4056A1" :disabled="disabled" aria-label="go prev page" outline @click="onClick">Назад</va-button>
+          <va-button color="#4056A1" :disabled="disabled" aria-label="go prev page" outline @click="onClick"
+            >Назад</va-button
+          >
         </template>
         <template #nextPageLink="{ onClick, disabled }">
-          <va-button color="#4056A1" :disabled="disabled" aria-label="go next page" outline @click="onClick">Далее</va-button>
+          <va-button color="#4056A1" :disabled="disabled" aria-label="go next page" outline @click="onClick"
+            >Далее</va-button
+          >
         </template>
       </va-pagination>
     </div>
@@ -265,7 +269,7 @@ import { filtersList } from './Filters';
 import HrSpinner from '../../ui/hrSpinner/HrSpinner';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import cloneDeep from 'lodash.clonedeep';
-import {EmployeeApi} from "../../api/employee/EmployeeApi";
+import { EmployeeApi } from '../../api/employee/EmployeeApi';
 export default {
   name: 'EmployeeTable',
   components: {
@@ -308,8 +312,6 @@ export default {
     form: [],
     // заголовок модального окна (добавление / апдейт)
     modalTitle: 'Новый сотрудник',
-    // валидация
-    validation: null,
     // флаг, если true - запрос к добавлению, false - к обновлению
     add: true,
 
@@ -429,27 +431,25 @@ export default {
       this.$refs.form.validate();
 
       // если прошли, запускаем лоадер и делаем запрос к апи
-      if (this.validation) {
-        this.cardLoading = true;
-        let result = '';
-        if (this.add) {
-          // создание нового сотрудника
-          result = await EmployeeApi.createEmployee(this.request);
-        } else {
-          // апдейт существующего
-          result = await EmployeeApi.updateEmployee(this.request.id, this.request);
-        }
-        if (result.status === 400) {
-          result.data.forEach(x => {
-            this.toast(x.message, 'danger');
-          });
-        } else {
-          this.toast(result.data.message, 'success');
-          this.$refs.employeeModal.closeModal();
-        }
-        this.cardLoading = false;
-        await this.updateTableData();
+      this.cardLoading = true;
+      let result = '';
+      if (this.add) {
+        // создание нового сотрудника
+        result = await EmployeeApi.createEmployee(this.request);
+      } else {
+        // апдейт существующего
+        result = await EmployeeApi.updateEmployee(this.request.id, this.request);
       }
+      if (result.status === 400) {
+        result.data.forEach(x => {
+          this.toast(x.message, 'danger');
+        });
+      } else {
+        this.toast(result.data.message, 'success');
+        this.$refs.employeeModal.closeModal();
+      }
+      this.cardLoading = false;
+      await this.updateTableData();
     },
   },
   computed: {
