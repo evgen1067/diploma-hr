@@ -1,14 +1,12 @@
 <template>
-  <va-content class="content">
-    <h3>Прогнозирование кадровой потребности</h3>
-  </va-content>
+  <hr-heading>Прогнозирование кадровой потребности</hr-heading>
 </template>
 
 <script>
-import { VaContent } from 'vuestic-ui';
+import HrHeading from '@/ui/hrHeading/HrHeading';
 export default {
   name: 'ForecastView',
-  components: { VaContent },
+  components: { HrHeading },
 };
 </script>
 

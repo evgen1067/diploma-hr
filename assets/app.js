@@ -62,9 +62,21 @@ import {
   PointElement,
   CategoryScale,
   Filler,
+  ArcElement,
 } from 'chart.js';
 
-ChartJS.register(Title, Tooltip, Legend, BarElement, LineElement, LinearScale, PointElement, CategoryScale, Filler);
+ChartJS.register(
+  Title,
+  Tooltip,
+  Legend,
+  BarElement,
+  LineElement,
+  LinearScale,
+  PointElement,
+  CategoryScale,
+  Filler,
+  ArcElement,
+);
 import './styles/style.css';
 
 const app = withUUID(createApp(App));

@@ -29,7 +29,7 @@ class EmployeeController extends AbstractController
      * @throws JsonException
      */
     #[Route('/employees', name: 'app_employees', methods: ['GET'])]
-    public function index(
+    public function employees(
         Request $request,
         EmployeeRepository $employeeRepository,
         PaginatorInterface $paginator
@@ -168,8 +168,9 @@ class EmployeeController extends AbstractController
     /**
      * @throws JsonException
      */
-    #[Route('/employees/edit', name: 'app_employees_put', methods: ['PUT'])]
+    #[Route('/employees/{id}', name: 'app_employees_put', methods: ['PUT'])]
     public function edit(
+        int $id,
         Request $request,
         EmployeeRepository $employeeRepository
     ): JsonResponse
@@ -179,8 +180,6 @@ class EmployeeController extends AbstractController
         $response = new JsonResponse();
 
         $content = [];
-
-        $id = $dataForCreate['id'];
 
         $fullName = $dataForCreate['fullName'];
         $dateOfEmployment = $dataForCreate['dateOfEmployment'];

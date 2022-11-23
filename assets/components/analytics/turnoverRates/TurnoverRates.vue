@@ -1,95 +1,97 @@
 <template>
   <template v-if="!loading">
-    <div class="row">
-      <div class="col-12 mb-3 pr-3 pl-3">
-        <div class="d-flex flex-column">
-          <div class="d-flex pr-3 pl-3 align-items-center">
-            <div class="col-12 pr-3 pl-3 d-flex flex-row align-items-center">
-              <div class="mr-3 mb-2">
-                <va-popover
-                  icon="info"
-                  color="#4056A1"
-                  title="Дата начала периода"
-                  :hover-out-timeout="30"
-                  :message="`По умолчанию — ${defaultDate.valueFrom}`"
-                  placement="bottom-start"
-                  open
-                >
-                  <va-date-input
-                    v-model="filter.valueFrom"
-                    label="От"
-                    manual-input
-                    clearable
-                    @update:model-value="fetchData"
-                    @clear="fetchData"
-                    :reset-on-close="false"
-                  />
-                </va-popover>
+    <div class="d-flex flex-column">
+      <div class="chart-container pl-3 pr-3">
+        <div class="row mb-3 mt-3">
+          <div class="col-4">
+            <div class="row">
+              <div class="col-6">
+                <div class="d-flex flex-column">
+                  <div class="mb-3">
+                    <va-popover
+                      icon="info"
+                      color="#4056A1"
+                      title="Дата начала периода"
+                      :hover-out-timeout="30"
+                      :message="`По умолчанию — ${defaultDate.valueFrom}`"
+                      placement="bottom-start"
+                      open
+                    >
+                      <va-date-input
+                        v-model="filter.valueFrom"
+                        label="От"
+                        manual-input
+                        clearable
+                        @update:model-value="updateChartData"
+                        @clear="updateChartData"
+                        :reset-on-close="false"
+                      />
+                    </va-popover>
+                  </div>
+                </div>
               </div>
-
-              <div class="mr-3 mb-2">
-                <va-popover
-                  icon="info"
-                  color="#4056A1"
-                  title="Дата конца периода"
-                  :hover-out-timeout="30"
-                  :message="`По умолчанию — ${defaultDate.valueTo}`"
-                  placement="bottom-start"
-                  open
-                >
-                  <va-date-input
-                    v-model="filter.valueTo"
-                    label="До"
-                    manual-input
-                    clearable
-                    @update:model-value="fetchData"
-                    @clear="fetchData"
-                    :reset-on-close="false"
-                  />
-                </va-popover>
-              </div>
-
-              <div class="mr-3 mb-2">
-                <va-popover
-                  icon="info"
-                  color="#4056A1"
-                  title="Фильтрация по компании"
-                  :hover-out-timeout="30"
-                  message="По умолчанию — по всей компании"
-                  placement="bottom-start"
-                  open
-                >
-                  <va-select
-                    label="Отдел"
-                    v-model="filter.department"
-                    :options="departmentOptions"
-                    clearable
-                    color="#4056A1"
-                    @update:model-value="fetchData"
-                  ></va-select>
-                </va-popover>
+              <div class="col-6">
+                <div class="d-flex flex-column">
+                  <div class="mb-3">
+                    <va-popover
+                      icon="info"
+                      color="#4056A1"
+                      title="Дата конца периода"
+                      :hover-out-timeout="30"
+                      :message="`По умолчанию — ${defaultDate.valueTo}`"
+                      placement="bottom-start"
+                      open
+                    >
+                      <va-date-input
+                        v-model="filter.valueTo"
+                        label="До"
+                        manual-input
+                        clearable
+                        @update:model-value="updateChartData"
+                        @clear="updateChartData"
+                        :reset-on-close="false"
+                      />
+                    </va-popover>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-      <div class="col-12 mb-3">
-        <Line class="hr-chart" :chart-options="{ ...chartOptions }" :chart-data="chartData" type="line" />
-      </div>
-      <div class="col-12">
-        <div class="d-flex flex-column">
-          <va-content>
-            <h5 class="mb-1">Количество сотрудников на текущий момент времени: {{ turnoverData.totalNumber }}.</h5>
-            <h5 class="mb-1">
-              Изменения по численности (принято - {{ turnoverData.acceptedNumber }}, уволено -
-              {{ turnoverData.dismissedNumber }}, декрет - {{ turnoverData.decreeNumber }}).
-            </h5>
-            <h5 class="mb-1">Среднесписочная численность: {{ turnoverData.averageNumber }}.</h5>
-            <h5 class="mb-1">Коэффициент текучести: {{ turnoverData.turnoverRatio }}.</h5>
-            <h5 class="mb-1">Коэффициент добровольной текучести: {{ turnoverData.turnoverVoluntarilyRatio }}.</h5>
-            <h5 class="mb-1">Коэффициент принудительной текучести: {{ turnoverData.turnoverForcedRatio }}.</h5>
-            <h5 class="mb-1">Коэффициент нежелательной текучести: {{ turnoverData.turnoverUndesirableRatio }}.</h5>
-          </va-content>
+        <div class="row mb-3">
+          <div class="col-2">
+            <hr-card :value="turnoverData.totalNumber" description="число сотрудников" color="#4056A1" />
+          </div>
+          <div class="col-2">
+            <hr-card :value="turnoverData.acceptedNumber" description="принято" color="success" />
+          </div>
+          <div class="col-2">
+            <hr-card :value="turnoverData.dismissedNumber" description="уволено" color="#F13C20" />
+          </div>
+          <div class="col-2">
+            <hr-card :value="turnoverData.decreeNumber" description="декрет" color="#F37A48" />
+          </div>
+          <div class="col-2">
+            <hr-card :value="turnoverData.averageNumber" description="Среднеспис. числ." color="#30B5C8" />
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-6">
+            <va-card>
+              <va-card-content>
+                <hr-chart :data="turnoverData.turnoverChart" type="bar" />
+              </va-card-content>
+            </va-card>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-12">
+            <va-card>
+              <va-card-content>
+                <hr-chart :data="turnoverData.averageNumberDataChart" type="line" />
+              </va-card-content>
+            </va-card>
+          </div>
         </div>
       </div>
     </div>
@@ -100,26 +102,23 @@
 </template>
 
 <script>
-import HrSpinner from '../../../ui/hrSpinner/HrSpinner';
-import { ChartApi } from '../../../api/chart/ChartApi';
-import { Line } from 'vue-chartjs';
-import { defaultConfig } from '../ChartConfig';
-import { VaContent, VaDateInput, VaIcon, VaPopover, VaSelect } from 'vuestic-ui';
-import cloneDeep from 'lodash.clonedeep';
+import { ChartApi } from '@/api/chart/ChartApi';
+import { VaCard, VaCardContent, VaDateInput, VaPopover } from 'vuestic-ui';
+import { cloneDeep } from 'lodash';
+import HrChart from '@/ui/hrChart/HrChart';
+import HrSpinner from '@/ui/hrSpinner/HrSpinner';
+import HrCard from '@/ui/hrCard/HrCard';
 
 export default {
   name: 'TurnoverRates',
-  components: { VaPopover, VaSelect, VaDateInput, VaIcon, VaContent, HrSpinner, Line },
+  components: { HrCard, HrChart, VaCardContent, VaCard, VaPopover, VaDateInput, HrSpinner },
   data: () => ({
     defaultDate: {
       valueFrom: '',
       valueTo: '',
     },
-    loading: true,
-    chartOptions: null,
+    loading: false,
     turnoverData: null,
-    chartData: null,
-    departmentOptions: null,
     filter: {
       valueFrom: null,
       valueTo: null,
@@ -127,52 +126,51 @@ export default {
     },
   }),
   async created() {
-    this.chartOptions = defaultConfig;
-    this.filter.valueTo = new Date();
-    this.filter.valueFrom = new Date();
-    this.filter.valueFrom.setMonth(this.filter.valueFrom.getMonth() - 1);
-    this.defaultDate = {
-      valueFrom: this.filter.valueFrom.toLocaleDateString(),
-      valueTo: this.filter.valueTo.toLocaleDateString(),
-    };
-    await this.fetchData();
-    this.filter.department = this.departmentOptions[0];
+    this.defaultSettings();
+    await this.updateChartData();
   },
   methods: {
-    async fetchData() {
-      this.loading = true;
-
-      this.turnoverData = await ChartApi.getTurnoverInfo(this.clearFilter());
-      this.departmentOptions = await ChartApi.getDepartmentsInfo();
-      this.departmentOptions.unshift('По всей компании');
-      this.chartData = this.turnoverData.averageNumberDataChart;
-      this.$nextTick(() => {
-        this.loading = false;
-      });
+    // настройки по умолчанию
+    defaultSettings() {
+      this.filter.valueTo = new Date();
+      this.filter.valueFrom = new Date();
+      this.filter.valueFrom.setMonth(this.filter.valueFrom.getMonth() - 1);
+      this.defaultDate = {
+        valueFrom: this.filter.valueFrom.toLocaleDateString(),
+        valueTo: this.filter.valueTo.toLocaleDateString(),
+      };
     },
+    // обновление данных по увольнениям
+    async updateChartData() {
+      if (!this.loading) {
+        this.loading = true;
+        this.turnoverData = await ChartApi.getTurnoverInfo(this.clearFilter());
+        this.loading = false;
+      }
+    },
+    // очистка фильтра
     clearFilter() {
       let filter = cloneDeep(this.filter);
+      if (filter.valueTo < filter.valueFrom) {
+        filter.valueFrom = new Date();
+        filter.valueFrom.setMonth(filter.valueFrom.getMonth() - 36);
+        filter.valueTo = new Date();
+      }
       if (!filter.valueFrom) {
-        delete filter.valueFrom;
-      } else {
-        filter.valueFrom = filter.valueFrom.toLocaleDateString();
+        filter.valueFrom = new Date();
+        filter.valueFrom.setMonth(filter.valueFrom.getMonth() - 36);
       }
       if (!filter.valueTo) {
-        delete filter.valueTo;
-      } else {
-        filter.valueTo = filter.valueTo.toLocaleDateString();
+        filter.valueTo = new Date();
       }
-      if (!filter.department || filter.department === 'По всей компании') {
-        delete filter.department;
-      }
-      return filter;
+      this.filter = cloneDeep(filter);
+      return {
+        valueFrom: filter.valueFrom.toLocaleDateString(),
+        valueTo: filter.valueTo.toLocaleDateString(),
+      };
     },
   },
 };
 </script>
 
-<style scoped>
-.hr-chart {
-  height: 340px;
-}
-</style>
+<style scoped></style>

@@ -619,21 +619,15 @@ class EmployeeRepository extends ServiceEntityRepository
         ];
     }
 
-    public function findDataForTurnoverRates($valueTo, $valueFrom, $department): array
+    public function findDataForTurnoverRates($valueTo, $valueFrom): array
     {
         $labels = [];
         $datasets = [
-            'label' => 'Списочная численность',
-            'backgroundColor' => '#2191FB',
+            'label' => 'Списочная численность по всей компании',
+            'backgroundColor' => '#4056A1',
             'borderWidth' => 1,
             'data' => [],
         ];
-
-        if ($department) {
-            $datasets['label'] .= ' в ' . $department;
-        } else {
-            $datasets['label'] .= ' по всей компании';
-        }
 
         $datasets['label'] .= ' за период с ' . $valueFrom->format('d.m.Y') . ' по ' . $valueTo->format('d.m.Y');
 
@@ -642,16 +636,15 @@ class EmployeeRepository extends ServiceEntityRepository
         $query = $this->createQueryBuilder('e');
         $query
             ->select('e')
-            ->andWhere('e.status != 3');
-        if ($department) {
-            $query
-                ->andWhere('e.department = :department')
-                ->setParameter('department', $department);
-        }
+            ->andWhere('e.status != 3 OR (e.status = 3 AND e.dateOfDismissal >= :dateOfDismissal)')
+            ->setParameter('dateOfDismissal', $valueTo);
+
         $numberOfEmployees = count($query->getQuery()->getArrayResult());
 
         # декрет
-        
+        $query = $this->createQueryBuilder('e');
+        $query
+            ->select('e');
         $query->andWhere('e.status = 2');
         $numberOfDecreeEmployees = count($query->getQuery()->getArrayResult());
 
@@ -663,11 +656,7 @@ class EmployeeRepository extends ServiceEntityRepository
             ->setParameter('dateOfEmployment1', $valueFrom)
             ->andWhere('e.dateOfEmployment <= :dateOfEmployment2')
             ->setParameter('dateOfEmployment2', $valueTo);
-        if ($department) {
-            $query
-                ->andWhere('e.department = :department')
-                ->setParameter('department', $department);
-        }
+
         $numberOfAcceptedEmployees = count($query->getQuery()->getArrayResult());
 
         # уволено
@@ -678,11 +667,7 @@ class EmployeeRepository extends ServiceEntityRepository
             ->setParameter('dateOfDismissal1', $valueFrom)
             ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
             ->setParameter('dateOfDismissal2', $valueTo);
-        if ($department) {
-            $query
-                ->andWhere('e.department = :department')
-                ->setParameter('department', $department);
-        }
+
         $numberOfDismissedEmployees = count($query->getQuery()->getArrayResult());
 
         # Среднесписочная численность
@@ -695,21 +680,15 @@ class EmployeeRepository extends ServiceEntityRepository
             ->setParameter('dateOfDismissal1', $valueFrom)
             ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
             ->setParameter('dateOfDismissal2', $valueTo);
-        if ($department) {
-            $query
-                ->andWhere('e.department = :department')
-                ->setParameter('department', $department);
-        }
+
         $result = $query->getQuery()->getArrayResult();
 
         $numberOfAverageEmployees = 0;
 
-        $numberOfDays = 0;
+        $numberOfDays = $valueTo->diff($valueFrom)->days + 1;
 
         $constNumberOfEmployees = $numberOfEmployees - $numberOfDecreeEmployees;
-
         while ($periodEndDate >= $valueFrom) {
-            $numberOfDays++;
             $currentIncrement = $constNumberOfEmployees;
             # пробег по уволенным сотрудникам
             foreach ($result as $item) {
@@ -722,13 +701,14 @@ class EmployeeRepository extends ServiceEntityRepository
             $datasets['data'][] = $currentIncrement;
             $periodEndDate = $periodEndDate->modify('-1 day');
         }
+
         $datasets['data'] = array_reverse($datasets['data']);
 
         $numberOfAverageEmployees = round(fdiv($numberOfAverageEmployees, $numberOfDays), 3);
 
         # коэффициент текучести
 
-        $turnoverRatio = round(fdiv($numberOfDismissedEmployees, $numberOfAverageEmployees), 3);
+        $turnoverRatio = round(fdiv($numberOfDismissedEmployees, $numberOfAverageEmployees) * 100, 3);
 
         # кол-во уволенных по собств желанию
 
@@ -737,12 +717,8 @@ class EmployeeRepository extends ServiceEntityRepository
             ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
             ->setParameter('dateOfDismissal1', $valueFrom)
             ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
-            ->setParameter('dateOfDismissal2', $valueTo);
-        if ($department) {
-            $query
-                ->andWhere('e.department = :department')
-                ->setParameter('department', $department);
-        }
+            ->setParameter('dateOfDismissal2', $valueTo)
+            ->andWhere('e.categoryOfDismissal = 1');
 
         $numberVoluntarily = count($query->getQuery()->getArrayResult());
 
@@ -755,11 +731,7 @@ class EmployeeRepository extends ServiceEntityRepository
             ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
             ->setParameter('dateOfDismissal2', $valueTo)
             ->andWhere('e.categoryOfDismissal = 2');
-        if ($department) {
-            $query
-                ->andWhere('e.department = :department')
-                ->setParameter('department', $department);
-        }
+
         $numberForced = count($query->getQuery()->getArrayResult());
 
         # кол-во уволенных нежелательно
@@ -771,24 +743,58 @@ class EmployeeRepository extends ServiceEntityRepository
             ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
             ->setParameter('dateOfDismissal2', $valueTo)
             ->andWhere('e.categoryOfDismissal = 3');
-        if ($department) {
-            $query
-                ->andWhere('e.department = :department')
-                ->setParameter('department', $department);
-        }
+
         $numberUndesirable = count($query->getQuery()->getArrayResult());
 
         # коэффициент добровольной текучести
 
-        $turnoverVoluntarilyRatio = round(fdiv($numberVoluntarily, $numberOfAverageEmployees), 3);
+        $turnoverVoluntarilyRatio = round(fdiv($numberVoluntarily, $numberOfAverageEmployees) * 100, 3);
 
         # коэффициент принудительной текучести
 
-        $turnoverForcedRatio = round(fdiv($numberForced, $numberOfAverageEmployees), 3);
+        $turnoverForcedRatio = round(fdiv($numberForced, $numberOfAverageEmployees) * 100, 3);
 
         # коэффициент нежелательной текучести
 
-        $turnoverUndesirableRatio = round(fdiv($numberUndesirable, $numberOfAverageEmployees), 3);
+        $turnoverUndesirableRatio = round(fdiv($numberUndesirable, $numberOfAverageEmployees) * 100, 3);
+
+        $averageNumberDataChart = [
+            'labels' => array_reverse($labels),
+            'datasets' => [$datasets],
+        ];
+
+        $labels = ['Коэф. текучести'];
+        $datasets = [
+            [
+                'label' => 'Коэффициент текучести',
+                'backgroundColor' => self::COLORS[0],
+                'borderWidth' => 1,
+                'data' => [$turnoverRatio],
+            ],
+            [
+                'label' => 'Коэффициент добровольной текучести',
+                'backgroundColor' => self::COLORS[1],
+                'borderWidth' => 1,
+                'data' => [$turnoverVoluntarilyRatio],
+            ],
+            [
+                'label' => 'Коэффициент принудительной текучести',
+                'backgroundColor' => self::COLORS[2],
+                'borderWidth' => 1,
+                'data' => [$turnoverForcedRatio],
+            ],
+            [
+                'label' => 'Коэффициент нежелательной текучести',
+                'backgroundColor' => self::COLORS[3],
+                'borderWidth' => 1,
+                'data' => [$turnoverUndesirableRatio],
+            ],
+        ];
+
+        $turnoverChart = [
+            'labels' => $labels,
+            'datasets' => $datasets,
+        ];
 
         return [
             'totalNumber' => $numberOfEmployees,
@@ -796,17 +802,8 @@ class EmployeeRepository extends ServiceEntityRepository
             'decreeNumber' => $numberOfDecreeEmployees,
             'dismissedNumber' => $numberOfDismissedEmployees,
             'averageNumber' => $numberOfAverageEmployees,
-            'averageNumberDataChart' => [
-                'labels' => array_reverse($labels),
-                'datasets' => [$datasets],
-            ],
-            'turnoverRatio' => $turnoverRatio,
-            'numberVoluntarily' => $numberVoluntarily,
-            'turnoverVoluntarilyRatio' => $turnoverVoluntarilyRatio,
-            'numberForced' => $numberForced,
-            'turnoverForcedRatio' => $turnoverForcedRatio,
-            'numberUndesirable' => $numberUndesirable,
-            'turnoverUndesirableRatio' => $turnoverUndesirableRatio,
+            'averageNumberDataChart' => $averageNumberDataChart,
+            'turnoverChart' => $turnoverChart,
         ];
     }
 }

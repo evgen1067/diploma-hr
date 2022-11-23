@@ -1,3 +1,5 @@
+import { defineAsyncComponent } from 'vue';
+
 export const defaultConfig = {
   responsive: true,
   scales: {
@@ -13,10 +15,6 @@ export const defaultConfig = {
     x: {
       ticks: {
         display: false,
-        font: {
-          fontSize: 8,
-          family: 'Montserrat Alternates',
-        },
       },
     },
   },
@@ -59,3 +57,8 @@ export const defaultConfig = {
   animation: true,
 };
 
+export const chartTypesMap = {
+  line: defineAsyncComponent(() => import('@/ui/hrChart/chartTypes/LineChart.vue')),
+  bar: defineAsyncComponent(() => import('@/ui/hrChart/chartTypes/BarChart.vue')),
+  'horizontal-bar': defineAsyncComponent(() => import('@/ui/hrChart/chartTypes/HorizontalBarChart.vue')),
+};

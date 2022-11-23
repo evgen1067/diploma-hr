@@ -51,7 +51,7 @@ class Employee {
   // изменение сотрудника
   static async editEmployee(data) {
     // запрос на бэкенд для изменения сотрудника
-    return await EmployeeApi.editEmployee(data);
+    return await EmployeeApi.updateEmployee(data);
   }
 
   // получение сотрудника по id

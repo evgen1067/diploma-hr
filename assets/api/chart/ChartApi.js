@@ -1,4 +1,4 @@
-import { Api } from '../Api';
+import { Api } from '@/api/Api';
 
 export class ChartApi extends Api {
   static async getLayoffsInfo(data) {
@@ -6,10 +6,6 @@ export class ChartApi extends Api {
   }
 
   static async getTurnoverInfo(data) {
-    return this.get('/api/v1/turnover', data);
-  }
-
-  static async getDepartmentsInfo(data) {
-    return this.get('/api/v1/departments', data);
+    return this.get('/api/v1/chart-turnover', data);
   }
 }

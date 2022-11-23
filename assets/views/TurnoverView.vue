@@ -1,16 +1,14 @@
 <template>
-  <va-content class="content">
-    <h3 class="fw-bolder text-center">Показатели текучести</h3>
-  </va-content>
+  <hr-heading>Показатели текучести</hr-heading>
   <turnover-rates />
 </template>
 
 <script>
-import { VaContent } from 'vuestic-ui';
-import TurnoverRates from '../components/analytics/turnoverRates/TurnoverRates';
+import TurnoverRates from '@/components/analytics/turnoverRates/TurnoverRates';
+import HrHeading from '@/ui/hrHeading/HrHeading';
 export default {
   name: 'TurnoverView',
-  components: { TurnoverRates, VaContent },
+  components: { HrHeading, TurnoverRates },
 };
 </script>
 

@@ -20,35 +20,7 @@ class ChartController extends AbstractController
         $this->serializer = SerializerBuilder::create()->build();
     }
 
-//    #[Route('/layoffs', name: 'app_layoffs_chart', methods: ['GET'])]
-//    public function layoffs(
-//        Request $request,
-//        EmployeeRepository $employeeRepository
-//    ): JsonResponse
-//    {
-//        $department = $request->query->get('department');
-//        $valueTo = $request->query->get('valueTo');
-//        if ($valueTo) {
-//            $valueTo = \DateTimeImmutable::createFromFormat('d.m.Y', $valueTo);
-//        } else {
-//            $valueTo = new \DateTimeImmutable();
-//        }
-//        $valueFrom = $request->query->get('valueFrom');
-//        if ($valueFrom) {
-//            $valueFrom = \DateTimeImmutable::createFromFormat('d.m.Y', $valueFrom);
-//        } else {
-//            $valueFrom = new \DateTimeImmutable('-1 month');
-//        }
-//        $work = $request->query->get('work');
-//
-//        $result = $employeeRepository->findDataForLayoffsChart($department, $valueTo, $valueFrom, $work);
-//        $response = new JsonResponse();
-//        $response->setStatusCode(Response::HTTP_OK);
-//        $response->setContent($this->serializer->serialize($result, 'json'));
-//        return $response;
-//    }
-
-    #[Route('/turnover', name: 'app_turnover_chart', methods: ['GET'])]
+    #[Route('/chart-turnover', name: 'app_turnover_chart', methods: ['GET'])]
     public function turnover(
         Request $request,
         EmployeeRepository $employeeRepository

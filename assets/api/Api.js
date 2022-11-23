@@ -15,12 +15,6 @@ export class Api {
           if (err.response) {
             // client received an error response (5xx, 4xx)
             resolve(err.response);
-          } else if (err.request) {
-            // client never received a response, or request never left
-            console.log(err.request);
-          } else {
-            // anything else
-            console.log(err);
           }
         });
     });
@@ -35,28 +29,22 @@ export class Api {
           if (err.response) {
             // client received an error response (5xx, 4xx)
             resolve(err.response);
-          } else if (err.request) {
-            // client never received a response, or request never left
-            console.log(err.request);
-          } else {
-            // anything else
-            console.log(err);
           }
         });
     });
   }
 
   static async get(url, params) {
-    return new Promise((resolve, reject) => {
+    return new Promise(resolve => {
       axios
         .get(url, { ...config, params })
-        .then(
-          response => resolve(response.data),
-          err => {
-            reject(err);
-          },
-        )
-        .catch(error => reject(error));
+        .then(response => resolve(response.data))
+        .catch(err => {
+          if (err.response) {
+            // client received an error response (5xx, 4xx)
+            resolve(err.response);
+          }
+        });
     });
   }
 }

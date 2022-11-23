@@ -265,6 +265,7 @@ import { filtersList } from './Filters';
 import HrSpinner from '../../ui/hrSpinner/HrSpinner';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import cloneDeep from 'lodash.clonedeep';
+import {EmployeeApi} from "../../api/employee/EmployeeApi";
 export default {
   name: 'EmployeeTable',
   components: {
@@ -337,6 +338,14 @@ export default {
     },
   },
   methods: {
+    // уведомления
+    toast(message, color) {
+      this.$vaToast.init({
+        message: message,
+        color: color,
+        position: 'bottom-right',
+      });
+    },
     // обновление информации по таблице
     async updateTableData() {
       this.loading = true;
@@ -351,17 +360,9 @@ export default {
       this.loading = false;
 
       if (this.table.items.length) {
-        this.$vaToast.init({
-          message: 'Данные загружены',
-          color: 'success',
-          position: 'bottom-right',
-        });
+        this.toast('Данные загружены', 'success');
       } else {
-        this.$vaToast.init({
-          message: 'Данных не найдено',
-          color: 'warning',
-          position: 'bottom-right',
-        });
+        this.toast('Данных не найдено', 'warning');
       }
     },
     // удаление выбранных сотрудников
@@ -369,21 +370,13 @@ export default {
       if (this.table.selectedItems && this.table.selectedItems.length) {
         if (confirm('Вы уверены, что желаете удалить выбранных сотрудников?')) {
           this.loading = true;
-          await Employee.deleteEmployeesByIds(this.table.selectedItems);
+          await EmployeeApi.deleteEmployees(this.table.selectedItems);
           await this.updateTableData(this.filter);
           this.loading = false;
-          this.$vaToast.init({
-            message: 'Сотрудники успешно удалены',
-            color: 'success',
-            position: 'bottom-right',
-          });
+          this.toast('Сотрудники успешно удалены', 'success');
         }
       } else {
-        this.$vaToast.init({
-          message: 'Вы не выбрали ни одного сотрудника',
-          color: 'danger',
-          position: 'bottom-right',
-        });
+        this.toast('Вы не выбрали ни одного сотрудника', 'danger');
       }
     },
     // изменение текущего фильтра
@@ -415,7 +408,7 @@ export default {
       this.add = false;
       // получение информации о сотруднике
       this.modalTitle = 'Обновление информации о существующем сотруднике';
-      let result = await Employee.getEmployeeById(event.item.id);
+      let result = await EmployeeApi.getEmployee(event.item.id);
       this.form = cloneDeep(dataColumns);
 
       // отключаем лоадер
@@ -427,11 +420,7 @@ export default {
           this.$refs.employeeModal.openModal();
         });
       } else {
-        this.$vaToast.init({
-          message: result.data.message,
-          color: 'success',
-          position: 'bottom-right',
-        });
+        this.toast(result.data.message, 'success');
       }
     },
     // submit формы
@@ -442,44 +431,21 @@ export default {
       // если прошли, запускаем лоадер и делаем запрос к апи
       if (this.validation) {
         this.cardLoading = true;
+        let result = '';
         if (this.add) {
           // создание нового сотрудника
-          let result = await Employee.createEmployee(this.request);
-          if (result.status === 400) {
-            result.data.forEach(x => {
-              this.$vaToast.init({
-                message: x.message,
-                color: 'danger',
-                position: 'bottom-right',
-              });
-            });
-          } else {
-            this.$vaToast.init({
-              message: result.data.message,
-              color: 'success',
-              position: 'bottom-right',
-            });
-            this.$refs.employeeModal.closeModal();
-          }
+          result = await EmployeeApi.createEmployee(this.request);
         } else {
           // апдейт существующего
-          let result = await Employee.editEmployee(this.request);
-          if (result.status === 400) {
-            result.data.forEach(x => {
-              this.$vaToast.init({
-                message: x.message,
-                color: 'danger',
-                position: 'bottom-right',
-              });
-            });
-          } else {
-            this.$vaToast.init({
-              message: result.data.message,
-              color: 'success',
-              position: 'bottom-right',
-            });
-            this.$refs.employeeModal.closeModal();
-          }
+          result = await EmployeeApi.updateEmployee(this.request.id, this.request);
+        }
+        if (result.status === 400) {
+          result.data.forEach(x => {
+            this.toast(x.message, 'danger');
+          });
+        } else {
+          this.toast(result.data.message, 'success');
+          this.$refs.employeeModal.closeModal();
         }
         this.cardLoading = false;
         await this.updateTableData();

@@ -1,17 +1,15 @@
 <template>
-  <va-content class="content">
-    <h3 class="fw-bolder text-center">Управление сотрудниками</h3>
-  </va-content>
+  <hr-heading>Управление сотрудниками</hr-heading>
   <employee-table />
 </template>
 
 <script>
-import { VaContent } from 'vuestic-ui';
-import EmployeeTable from '../components/employee/EmployeeTable';
+import EmployeeTable from '@/components/employee/EmployeeTable';
+import HrHeading from '@/ui/hrHeading/HrHeading';
 
 export default {
   name: 'EmployeeView',
-  components: { EmployeeTable, VaContent },
+  components: { HrHeading, EmployeeTable },
 };
 </script>
 
