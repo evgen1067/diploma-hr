@@ -16,7 +16,8 @@ class ChartController extends AbstractController
 {
     private Serializer $serializer;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->serializer = SerializerBuilder::create()->build();
     }
 
@@ -24,8 +25,7 @@ class ChartController extends AbstractController
     public function turnover(
         Request $request,
         EmployeeRepository $employeeRepository
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $valueTo = $request->query->get('valueTo');
         if ($valueTo) {
             $valueTo = \DateTimeImmutable::createFromFormat('d.m.Y', $valueTo);
@@ -42,6 +42,7 @@ class ChartController extends AbstractController
         $response = new JsonResponse();
         $response->setStatusCode(Response::HTTP_OK);
         $response->setContent($this->serializer->serialize($result, 'json'));
+
         return $response;
     }
 
@@ -49,8 +50,7 @@ class ChartController extends AbstractController
     public function chart(
         Request $request,
         EmployeeRepository $employeeRepository
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $valueTo = $request->query->get('valueTo');
         if ($valueTo) {
             $valueTo = \DateTimeImmutable::createFromFormat('d.m.Y', $valueTo);
@@ -68,6 +68,7 @@ class ChartController extends AbstractController
         $response = new JsonResponse();
         $response->setStatusCode(Response::HTTP_OK);
         $response->setContent($this->serializer->serialize($result, 'json'));
+
         return $response;
     }
 }

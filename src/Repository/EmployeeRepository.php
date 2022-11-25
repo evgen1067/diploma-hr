@@ -3,8 +3,6 @@
 namespace App\Repository;
 
 use App\Entity\Employee;
-use Cassandra\Date;
-use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
@@ -12,27 +10,13 @@ use Doctrine\Persistence\ManagerRegistry;
 /**
  * @extends ServiceEntityRepository<Employee>
  *
- * @method Employee|null find($id, $lockMode = null, $lockVersion = null)
- * @method Employee|null findOneBy(array $criteria, array $orderBy = null)
+ * @method null|Employee find($id, $lockMode = null, $lockVersion = null)
+ * @method null|Employee findOneBy(array $criteria, array $orderBy = null)
  * @method Employee[]    findAll()
  * @method Employee[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
 class EmployeeRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
-    {
-        parent::__construct($registry, Employee::class);
-    }
-
-    public function save(Employee $entity, bool $flush = false): void
-    {
-        $this->getEntityManager()->persist($entity);
-
-        if ($flush) {
-            $this->getEntityManager()->flush();
-        }
-    }
-
     private const STATUS_TYPES = [
         1 => 'работает',
         2 => 'декрет',
@@ -76,6 +60,20 @@ class EmployeeRepository extends ServiceEntityRepository
         '#D72638',
     ];
 
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Employee::class);
+    }
+
+    public function save(Employee $entity, bool $flush = false): void
+    {
+        $this->getEntityManager()->persist($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
     public function remove(Employee $entity, bool $flush = false): void
     {
         $this->getEntityManager()->remove($entity);
@@ -86,88 +84,14 @@ class EmployeeRepository extends ServiceEntityRepository
     }
 
     /**
-     * @param QueryBuilder $query
-     * @param array $filter
-     * @return QueryBuilder
-     * Фильтрация
-     */
-    private function buildQuery(QueryBuilder $query, array $filter): QueryBuilder
-    {
-        foreach ($filter as $key => $item) {
-
-            # текст содержит
-            if (isset($item['type']) && $item['type'] === 'text_contains') {
-                $query->andWhere($query->expr()->like('LOWER(e.' . $key . ')', ':param' . $key))
-                    ->setParameter('param' . $key, '%' . mb_strtolower($item['value']) . '%');
-            }
-
-            # текст не содержит
-            if (isset($item['type']) && $item['type'] === 'text_not_contains') {
-                $query->andWhere($query->expr()->notLike('LOWER(e.' . $key . ')', ':param' . $key))
-                    ->setParameter('param' . $key, '%' . mb_strtolower($item['value']) . '%');
-            }
-
-            # начинается с
-            if (isset($item['type']) && $item['type'] === 'text_start') {
-                $query->andWhere('e.' . $key . ' LIKE :param' . $key)
-                    ->setParameter('param' . $key, $item['value'] . '%');
-            }
-
-            # заканчивается на
-            if (isset($item['type']) && $item['type'] === 'text_end') {
-                $query->andWhere('e.' . $key . ' LIKE :param' . $key)
-                    ->setParameter('param' . $key,  '%' . $item['value']);
-            }
-
-            # Текст в точности
-            if (isset($item['type']) && ($item['type'] === 'text_accuracy' || $item['type'] === 'list')) {
-                $query->andWhere('e.' . $key . ' = :param' . $key)
-                    ->setParameter('param' . $key, $item['value']);
-            }
-
-            if (isset($item['type']) && $item['type'] === 'date_day') {
-                $query->andWhere('e.' . $key . ' = :param' . $key)
-                    ->setParameter('param' . $key, DateTimeImmutable::createFromFormat('d.m.Y', $item['value']));
-            }
-
-            if (isset($item['type']) && $item['type'] === 'date_before') {
-                $query->andWhere('e.' . $key . ' < :param' . $key)
-                    ->setParameter('param' . $key, DateTimeImmutable::createFromFormat('d.m.Y', $item['value']));
-            }
-
-            if (isset($item['type']) && $item['type'] === 'date_after') {
-                $query->andWhere('e.' . $key . ' > :param' . $key)
-                    ->setParameter('param' . $key, DateTimeImmutable::createFromFormat('d.m.Y', $item['value']));
-            }
-        }
-        return $query;
-    }
-
-    /**
-     * @param DateTimeImmutable $dateStart
-     * @param DateTimeImmutable|null $dateEnd
-     * @return float
-     * Получение опыта работы
-     */
-    private function getWorkExperience(DateTimeImmutable $dateStart, ?DateTimeImmutable $dateEnd = null): float
-    {
-        if ($dateEnd === null) {
-            $dateEnd = new DateTimeImmutable();
-        }
-        $interval = $dateStart->diff($dateEnd);
-        return round(fdiv($interval->days, 365.0), 2);
-    }
-
-    /**
-     * @param array|null $filter
      * @return array
-     * Получение таблицы сотрудников
+     *               Получение таблицы сотрудников
      */
     public function getTableData(array|null $filter): array
     {
         $query = $this->createQueryBuilder('e');
 
-        $query->select("e");
+        $query->select('e');
 
         if ($filter) {
             $query = $this->buildQuery($query, $filter);
@@ -199,55 +123,51 @@ class EmployeeRepository extends ServiceEntityRepository
 
             $filterWork = $filter['workExperience'] ?? null;
 
-            # Число не равно
-            if (isset($filterWork['type']) && $filterWork['type'] === 'number_equal') {
+            // Число не равно
+            if (isset($filterWork['type']) && 'number_equal' === $filterWork['type']) {
                 $numberFilter = true;
                 $value = $filterWork['value'];
                 if ($table[$key]['workExperience'] == $value) {
                     $resultSet[] = $table[$key];
                 }
-            }
-
-            # Число не равно
-            else if (isset($filterWork['type']) && $filterWork['type'] === 'number_not_equal') {
+            } // Число не равно
+            elseif (isset($filterWork['type']) && 'number_not_equal' === $filterWork['type']) {
                 $numberFilter = true;
                 $value = $filterWork['value'];
                 if ($table[$key]['workExperience'] != $value) {
                     $resultSet[] = $table[$key];
                 }
-            }
-
-            # Неравенство
-            else if (isset($filterWork['type'], $filterWork['valueFrom'], $filterWork['valueTo']) && $filterWork['type'] === 'number_inequality') {
+            } // Неравенство
+            elseif (isset($filterWork['type'], $filterWork['valueFrom'], $filterWork['valueTo']) && 'number_inequality' === $filterWork['type']) {
                 $numberFilter = true;
                 if (isset($filterWork['isStrict'])) {
-                    if ($filterWork['valueFrom'] !== '' && $filterWork['valueTo'] === '') {
+                    if ('' !== $filterWork['valueFrom'] && '' === $filterWork['valueTo']) {
                         $valueFrom = $filterWork['valueFrom'];
-                        if ($table[$key]['workExperience'] > $valueFrom && $filterWork['isStrict'] === true) {
+                        if ($table[$key]['workExperience'] > $valueFrom && true === $filterWork['isStrict']) {
                             $resultSet[] = $table[$key];
-                        } else if ($table[$key]['workExperience'] >= $valueFrom && $filterWork['isStrict'] === false) {
+                        } elseif ($table[$key]['workExperience'] >= $valueFrom && false === $filterWork['isStrict']) {
                             $resultSet[] = $table[$key];
                         }
-                    } else if ($filterWork['valueTo'] !== '' && $filterWork['valueFrom'] === '') {
+                    } elseif ('' !== $filterWork['valueTo'] && '' === $filterWork['valueFrom']) {
                         $valueTo = $filterWork['valueTo'];
-                        if ($table[$key]['workExperience'] < $valueTo && $filterWork['isStrict'] === true) {
+                        if ($table[$key]['workExperience'] < $valueTo && true === $filterWork['isStrict']) {
                             $resultSet[] = $table[$key];
-                        } else if ($table[$key]['workExperience'] <= $valueTo && $filterWork['isStrict'] === false) {
+                        } elseif ($table[$key]['workExperience'] <= $valueTo && false === $filterWork['isStrict']) {
                             $resultSet[] = $table[$key];
                         }
-                    } else if ($filterWork['valueTo'] !== '' && $filterWork['valueFrom'] !== '') {
+                    } elseif ('' !== $filterWork['valueTo'] && '' !== $filterWork['valueFrom']) {
                         $valueFrom = $filterWork['valueFrom'];
                         $valueTo = $filterWork['valueTo'];
                         if (
                             $table[$key]['workExperience'] < $valueTo &&
                             $table[$key]['workExperience'] > $valueFrom &&
-                            $filterWork['isStrict'] === true
+                            true === $filterWork['isStrict']
                         ) {
                             $resultSet[] = $table[$key];
-                        } else if (
+                        } elseif (
                             $table[$key]['workExperience'] <= $valueTo &&
                             $table[$key]['workExperience'] >= $valueFrom &&
-                            $filterWork['isStrict'] === false
+                            false === $filterWork['isStrict']
                         ) {
                             $resultSet[] = $table[$key];
                         }
@@ -263,9 +183,8 @@ class EmployeeRepository extends ServiceEntityRepository
     }
 
     /**
-     * @param int $id
      * @return array
-     * Данные по отдельному сотруднику в виде массива
+     *               Данные по отдельному сотруднику в виде массива
      */
     public function findEmployeeInArray(int $id): array
     {
@@ -276,492 +195,89 @@ class EmployeeRepository extends ServiceEntityRepository
             ->andWhere('e.id = :id')
             ->setParameter('id', $id);
         $result = $query->getQuery()->getArrayResult();
-       if (count($result) > 0) {
-           $result = $result[0];
-           $result['dateOfEmployment'] = $result['dateOfEmployment']->format('d.m.Y');
-           if (isset($result['dateOfDismissal'])) {
-               $result['dateOfDismissal'] = $result['dateOfDismissal']->format('d.m.Y');
-           }
-       }
+        if (count($result) > 0) {
+            $result = $result[0];
+            $result['dateOfEmployment'] = $result['dateOfEmployment']->format('d.m.Y');
+            if (isset($result['dateOfDismissal'])) {
+                $result['dateOfDismissal'] = $result['dateOfDismissal']->format('d.m.Y');
+            }
+        }
+
         return $result;
     }
 
-    /**
-     * @param $department
-     * @param $valueTo
-     * @param $valueFrom
-     * @param $work
-     * @return array|array[]
-     * Данные по увольнениям
-     */
-    public function findDataForLayoffsChart($department, $valueTo, $valueFrom, $work): array
+    public function findDataLayoffsChart(\DateTimeImmutable $valueTo, \DateTimeImmutable $valueFrom): array
     {
-        $query = $this->createQueryBuilder('e');
-        $query
-            ->andWhere('e.status = 3');
+        $departmentChart = $this->getTotalDismissedByDepartment($valueTo, $valueFrom);
 
-        $labels = [];
-        $datasets = [
-            'label' => 'по всей компании',
-            'backgroundColor' => self::COLORS,
-            'borderWidth' => 1,
-            'data' => [],
-        ];
+        $positionChart = $this->getTotalDismissedByPosition($valueTo, $valueFrom);
 
-        if ($department) {
-            $datasets['label'] = $department;
-            $query
-                ->andWhere('e.department = :depName')
-                ->setParameter('depName', $department);
-        }
+        $workExpChart = $this->getTotalDismissedByWorkExperience($valueTo, $valueFrom);
 
-        if ($valueFrom) {
-            $query
-                ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
-                ->setParameter('dateOfDismissal1', $valueFrom)
-                ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
-                ->setParameter('dateOfDismissal2', $valueTo);
-            $datasets['label'] .= ' за период с ' . $valueFrom->format('d.m.Y') . ' по ' . $valueTo->format('d.m.Y');
-        }
+        $totalDismissed = $this->getTotalDismissedEmployees($valueTo, $valueFrom);
 
-        $reasonData = [];
-        $categoryData = [];
+        $avgWorkExp = $this->getAverageWorkExperience($valueTo, $valueFrom);
 
-        /**
-         * @var array $result
-         */
-        $result = $query->getQuery()->getArrayResult();
+        // график уволенных по категориям
+        $categoryChart = $this->getTotalDismissedByCategory($valueTo, $valueFrom);
 
-        if ($work) {
-            $resultSet = [];
-            foreach ($result as $key => $item) {
-                $workExp = $this->getWorkExperience(
-                    $item['dateOfEmployment'],
-                    $item['dateOfDismissal'],
-                );
-                if ($work === 'меньше 3х месяцев' && $workExp < 0.25) {
-                    $resultSet[] = $item;
-                } else if ($work === 'до 1 года работы' && $workExp < 1) {
-                    $resultSet[] = $item;
-                } else if ($work === 'до 3х лет работы' && $workExp < 3) {
-                    $resultSet[] = $item;
-                } else if (($work === 'свыше 3х лет работы') && $workExp >= 3) {
-                    $resultSet[] = $item;
-                }
-            }
-            $result = $resultSet;
-            $datasets['label'] .= ' со стажем ' . $work;
-        }
-
-        foreach ($result as $key => $item) {
-            $reasonData[] = $item['reasonForDismissal'];
-            $categoryData[] = $item['categoryOfDismissal'];
-        }
-
-        $reasonAndCounts = array_count_values($reasonData);
-        $categoryAndCounts = array_count_values($categoryData);
-
-        $resultData = [
-            [
-                'labels' => $labels,
-                'datasets' => [ $datasets ],
-            ],
-            [
-                'labels' => $labels,
-                'datasets' => [ $datasets ],
-            ]
-        ];
-
-        foreach ($reasonAndCounts as $key => $item) {
-            $resultData[0]['labels'][] = self::REASON_TYPES[$key];
-            $resultData[0]['datasets'][0]['data'][] = $item;
-        }
-
-        foreach ($categoryAndCounts as $key => $item) {
-            $resultData[1]['labels'][] = self::CATEGORY_TYPE[$key];
-            $resultData[1]['datasets'][0]['data'][] = $item;
-        }
-
-        $resultData[0]['datasets'][0]['label'] =
-            'Причины увольнения ' . ($department ? 'в ' : '') . $resultData[0]['datasets'][0]['label'];
-
-        $resultData[1]['datasets'][0]['label'] =
-            'Категории увольнения ' . ($department ? 'в ' : '') . $resultData[1]['datasets'][0]['label'];
-
-        return $resultData;
-    }
-
-    /**
-     * @return array
-     * Список отделов
-     */
-    public function findAllDepartments(): array
-    {
-        $query = $this->createQueryBuilder('e');
-        $query
-            ->distinct(true)
-            ->select('e.department')
-            ->andWhere('e.status = 3');
-        $allData = [];
-
-        /**
-         * @var array $result
-         */
-        $result = $query->getQuery()->getArrayResult();
-        foreach ($result as $key => $item) {
-            $allData[] = $item['department'];
-        }
-        return $allData;
-    }
-
-    public function findDataLayoffsChart($valueTo, $valueFrom): array
-    {
-        $query = $this->createQueryBuilder('e');
-        $query
-            ->select('count(e.dateOfDismissal) as count')
-            ->addSelect('e.department')
-            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
-            ->setParameter('dateOfDismissal1', $valueFrom)
-            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
-            ->setParameter('dateOfDismissal2', $valueTo)
-            ->groupBy('e.department');
-        $result = $query->getQuery()->getArrayResult();
-
-        $labels = [];
-        $datasets = [
-            'label' => 'Количество увольнений',
-            'backgroundColor' => '#2191FB',
-            'borderWidth' => 1,
-            'data' => []
-        ];
-
-        foreach ($result as $key => $item) {
-            $labels[] = $item['department'];
-            $datasets['data'][] = $item['count'];
-        }
-
-        # график уволенных по отделу
-        $departmentChart = [
-            'labels' => $labels,
-            'datasets' => [$datasets],
-        ];
-
-        $query = $this->createQueryBuilder('e');
-        $query
-            ->select('count(e.dateOfDismissal) as count')
-            ->addSelect('e.position')
-            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
-            ->setParameter('dateOfDismissal1', $valueFrom)
-            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
-            ->setParameter('dateOfDismissal2', $valueTo)
-            ->groupBy('e.position');
-        $result = $query->getQuery()->getArrayResult();
-
-        $labels = [];
-        $datasets = [
-            'label' => 'Количество увольнений',
-            'backgroundColor' => '#8CDEDC',
-            'borderWidth' => 1,
-            'data' => []
-        ];
-
-        foreach ($result as $key => $item) {
-            $labels[] = $item['position'];
-            $datasets['data'][] = $item['count'];
-        }
-
-        # график уволенных по должностям
-        $positionChart = [
-            'labels' => $labels,
-            'datasets' => [$datasets],
-        ];
-
-        $query = $this->createQueryBuilder('e');
-        $query
-            ->select('e')
-            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
-            ->setParameter('dateOfDismissal1', $valueFrom)
-            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
-            ->setParameter('dateOfDismissal2', $valueTo);
-        /**
-         * @var array $result
-         */
-        $result = $query->getQuery()->getArrayResult();
-
-        # всего уволено
-        $totalDismissed = count($result);
-
-        # средний стаж работы
-        $avgWorkExp = 0;
-
-        $labels = ['Количество увольнений'];
-        $datasets = [
-            [
-                'label' => 'Менее 3х месяцев',
-                'backgroundColor' => '#329F5B',
-                'borderWidth' => 1,
-                'data' => [0]
-            ],
-            [
-                'label' => 'до 1 года работы',
-                'backgroundColor' => '#8380B6',
-                'borderWidth' => 1,
-                'data' => [0]
-            ],
-            [
-                'label' => 'до 3х лет работы',
-                'backgroundColor' => '#177E89',
-                'borderWidth' => 1,
-                'data' => [0]
-            ],
-            [
-                'label' => 'свыше 3х лет работы',
-                'backgroundColor' => '#F40076',
-                'borderWidth' => 1,
-                'data' => [0]
-            ],
-        ];
-
-        foreach ($result as $key => $item) {
-            $workExp = $this->getWorkExperience(
-                $item['dateOfEmployment'],
-                $item['dateOfDismissal'],
-            );
-
-            if ($workExp < 0.25) {
-                $datasets[0]['data'][0]++;
-            } else if ($workExp < 1) {
-                $datasets[1]['data'][0]++;
-            } else if ($workExp < 3) {
-                $datasets[2]['data'][0]++;
-            } else {
-                $datasets[3]['data'][0]++;
-            }
-            $avgWorkExp += $workExp;
-        }
-
-        $avgWorkExp = fdiv($avgWorkExp, $totalDismissed);
-
-        $workExpChart = [
-            'labels' => $labels,
-            'datasets' => $datasets,
-        ];
-
-        $query = $this->createQueryBuilder('e');
-        $query
-            ->select('count(e.categoryOfDismissal) as count')
-            ->addSelect('e.categoryOfDismissal')
-            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
-            ->setParameter('dateOfDismissal1', $valueFrom)
-            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
-            ->setParameter('dateOfDismissal2', $valueTo)
-            ->groupBy('e.categoryOfDismissal');
-
-        $result = $query->getQuery()->getArrayResult();
-
-        $labels = ['Количество увольнений'];
-        $datasets = [];
-
-        foreach ($result as $key => $item) {
-            $datasets[] = [
-                'label' => self::CATEGORY_TYPE[$item['categoryOfDismissal']],
-                'backgroundColor' => self::COLORS[$key],
-                'borderWidth' => 1,
-                'data' => [$item['count']]
-            ];
-        }
-
-        # график уволенных по категориям
-        $categoryChart = [
-            'labels' => $labels,
-            'datasets' => $datasets,
-        ];
-
-        $query = $this->createQueryBuilder('e');
-        $query
-            ->select('count(e.categoryOfDismissal) as count')
-            ->addSelect('e.reasonForDismissal')
-            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
-            ->setParameter('dateOfDismissal1', $valueFrom)
-            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
-            ->setParameter('dateOfDismissal2', $valueTo)
-            ->groupBy('e.reasonForDismissal');
-
-        $result = $query->getQuery()->getArrayResult();
-
-        $labels = [];
-        $datasets = [
-            'label' => 'Количество увольнений',
-            'backgroundColor' => self::COLORS,
-            'borderWidth' => 1,
-            'data' => []
-        ];
-
-        foreach ($result as $key => $item) {
-            $labels[] = self::REASON_TYPES[$item['reasonForDismissal']];
-            $datasets['data'][] = $item['count'];
-        }
-
-        # график уволенных по причинам
-        $reasonChart = [
-            'labels' => $labels,
-            'datasets' => [$datasets],
-        ];
+        $reasonChart = $this->getTotalDismissedByReason($valueTo, $valueFrom);
 
         return [
-            'totalDismissed' => $totalDismissed, # кол-во уволенных
-            'avgWorkExp' => round($avgWorkExp, 2), # средний стаж
-            'departmentChart' => $departmentChart, # общий график по отделам
-            'positionChart' => $positionChart, # общий график по должностям
-            'workExpChart' => $workExpChart, # общий график по должностям
-            'categoryChart' => $categoryChart, # общий график по категориям
-            'reasonChart' => $reasonChart, # общий график по причинам
+            'totalDismissed' => $totalDismissed, // кол-во уволенных
+            'avgWorkExp' => round($avgWorkExp, 2), // средний стаж
+            'departmentChart' => $departmentChart, // общий график по отделам
+            'positionChart' => $positionChart, // общий график по должностям
+            'workExpChart' => $workExpChart, // общий график по должностям
+            'categoryChart' => $categoryChart, // общий график по категориям
+            'reasonChart' => $reasonChart, // общий график по причинам
         ];
     }
 
-    public function findDataForTurnoverRates($valueTo, $valueFrom): array
+    public function findDataForTurnoverRates(\DateTimeImmutable $valueTo, \DateTimeImmutable $valueFrom): array
     {
-        $labels = [];
-        $datasets = [
-            'label' => 'Списочная численность по всей компании',
-            'backgroundColor' => '#4056A1',
-            'borderWidth' => 1,
-            'data' => [],
-        ];
+        // количество сотрудников
+        $numberOfEmployees = $this->getTotalNumberOfEmployees($valueTo);
 
-        $datasets['label'] .= ' за период с ' . $valueFrom->format('d.m.Y') . ' по ' . $valueTo->format('d.m.Y');
+        // декрет
+        $numberOfDecreeEmployees = $this->getTotalNumberOfDecreeEmployees();
 
-        # количество сотрудников
-        
-        $query = $this->createQueryBuilder('e');
-        $query
-            ->select('e')
-            ->andWhere('e.status != 3 OR (e.status = 3 AND e.dateOfDismissal >= :dateOfDismissal)')
-            ->setParameter('dateOfDismissal', $valueTo);
+        // принято
+        $numberOfAcceptedEmployees = $this->getTotalNumberOfAcceptedEmployees($valueTo, $valueFrom);
 
-        $numberOfEmployees = count($query->getQuery()->getArrayResult());
-
-        # декрет
-        $query = $this->createQueryBuilder('e');
-        $query
-            ->select('e');
-        $query->andWhere('e.status = 2');
-        $numberOfDecreeEmployees = count($query->getQuery()->getArrayResult());
-
-        # принято
-        
-        $query = $this->createQueryBuilder('e');
-        $query
-            ->andWhere('e.dateOfEmployment >= :dateOfEmployment1')
-            ->setParameter('dateOfEmployment1', $valueFrom)
-            ->andWhere('e.dateOfEmployment <= :dateOfEmployment2')
-            ->setParameter('dateOfEmployment2', $valueTo);
-
-        $numberOfAcceptedEmployees = count($query->getQuery()->getArrayResult());
-
-        # уволено
-        
-        $query = $this->createQueryBuilder('e');
-        $query
-            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
-            ->setParameter('dateOfDismissal1', $valueFrom)
-            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
-            ->setParameter('dateOfDismissal2', $valueTo);
-
-        $numberOfDismissedEmployees = count($query->getQuery()->getArrayResult());
-
-        # Среднесписочная численность
-
-        $periodEndDate = $valueTo;
-
-        $query = $this->createQueryBuilder('e');
-        $query
-            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
-            ->setParameter('dateOfDismissal1', $valueFrom)
-            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
-            ->setParameter('dateOfDismissal2', $valueTo);
-
-        $result = $query->getQuery()->getArrayResult();
-
-        $numberOfAverageEmployees = 0;
-
-        $numberOfDays = $valueTo->diff($valueFrom)->days + 1;
+        // уволено
+        $numberOfDismissedEmployees = $this->getTotalDismissedEmployees($valueTo, $valueFrom);
 
         $constNumberOfEmployees = $numberOfEmployees - $numberOfDecreeEmployees;
-        while ($periodEndDate >= $valueFrom) {
-            $currentIncrement = $constNumberOfEmployees;
-            # пробег по уволенным сотрудникам
-            foreach ($result as $item) {
-                if ($item['dateOfDismissal'] > $periodEndDate) {
-                    $currentIncrement++;
-                }
-            }
-            $numberOfAverageEmployees += $currentIncrement;
-            $labels[] = $periodEndDate->format('d.m.Y');
-            $datasets['data'][] = $currentIncrement;
-            $periodEndDate = $periodEndDate->modify('-1 day');
-        }
 
-        $datasets['data'] = array_reverse($datasets['data']);
+        $result = $this->getNumberOfAverageEmployees($valueTo, $valueFrom, $constNumberOfEmployees);
 
-        $numberOfAverageEmployees = round(fdiv($numberOfAverageEmployees, $numberOfDays), 3);
+        // среднесписочная численность
+        $numberOfAverageEmployees = $result['number'];
 
-        # коэффициент текучести
+        // численность на расчетный период
+        $averageNumberDataChart = $result['chart'];
 
+        // коэффициент текучести
         $turnoverRatio = round(fdiv($numberOfDismissedEmployees, $numberOfAverageEmployees) * 100, 3);
 
-        # кол-во уволенных по собств желанию
+        // кол-во уволенных по собств желанию
+        $numberVoluntarily = $this->getNumberVoluntarilyDismissed($valueTo, $valueFrom);
 
-        $query = $this->createQueryBuilder('e');
-        $query
-            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
-            ->setParameter('dateOfDismissal1', $valueFrom)
-            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
-            ->setParameter('dateOfDismissal2', $valueTo)
-            ->andWhere('e.categoryOfDismissal = 1');
+        // кол-во уволенных по принудительно
+        $numberForced = $this->getNumberForcedDismissed($valueTo, $valueFrom);
 
-        $numberVoluntarily = count($query->getQuery()->getArrayResult());
+        // кол-во уволенных нежелательно
+        $numberUndesirable = $this->getNumberUndesirableDismissed($valueTo, $valueFrom);
 
-        # кол-во уволенных по принудительно
-
-        $query = $this->createQueryBuilder('e');
-        $query
-            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
-            ->setParameter('dateOfDismissal1', $valueFrom)
-            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
-            ->setParameter('dateOfDismissal2', $valueTo)
-            ->andWhere('e.categoryOfDismissal = 2');
-
-        $numberForced = count($query->getQuery()->getArrayResult());
-
-        # кол-во уволенных нежелательно
-
-        $query = $this->createQueryBuilder('e');
-        $query
-            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
-            ->setParameter('dateOfDismissal1', $valueFrom)
-            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
-            ->setParameter('dateOfDismissal2', $valueTo)
-            ->andWhere('e.categoryOfDismissal = 3');
-
-        $numberUndesirable = count($query->getQuery()->getArrayResult());
-
-        # коэффициент добровольной текучести
-
+        // коэффициент добровольной текучести
         $turnoverVoluntarilyRatio = round(fdiv($numberVoluntarily, $numberOfAverageEmployees) * 100, 3);
 
-        # коэффициент принудительной текучести
-
+        // коэффициент принудительной текучести
         $turnoverForcedRatio = round(fdiv($numberForced, $numberOfAverageEmployees) * 100, 3);
 
-        # коэффициент нежелательной текучести
-
+        // коэффициент нежелательной текучести
         $turnoverUndesirableRatio = round(fdiv($numberUndesirable, $numberOfAverageEmployees) * 100, 3);
-
-        $averageNumberDataChart = [
-            'labels' => array_reverse($labels),
-            'datasets' => [$datasets],
-        ];
 
         $labels = ['Коэф. текучести'];
         $datasets = [
@@ -805,5 +321,507 @@ class EmployeeRepository extends ServiceEntityRepository
             'averageNumberDataChart' => $averageNumberDataChart,
             'turnoverChart' => $turnoverChart,
         ];
+    }
+
+    /**
+     * @return QueryBuilder
+     *                      Фильтрация
+     */
+    private function buildQuery(QueryBuilder $query, array $filter): QueryBuilder
+    {
+        foreach ($filter as $key => $item) {
+            // текст содержит
+            if (isset($item['type']) && 'text_contains' === $item['type']) {
+                $query->andWhere($query->expr()->like('LOWER(e.'.$key.')', ':param'.$key))
+                    ->setParameter('param'.$key, '%'.mb_strtolower($item['value']).'%');
+            }
+
+            // текст не содержит
+            if (isset($item['type']) && 'text_not_contains' === $item['type']) {
+                $query->andWhere($query->expr()->notLike('LOWER(e.'.$key.')', ':param'.$key))
+                    ->setParameter('param'.$key, '%'.mb_strtolower($item['value']).'%');
+            }
+
+            // начинается с
+            if (isset($item['type']) && 'text_start' === $item['type']) {
+                $query->andWhere('e.'.$key.' LIKE :param'.$key)
+                    ->setParameter('param'.$key, $item['value'].'%');
+            }
+
+            // заканчивается на
+            if (isset($item['type']) && 'text_end' === $item['type']) {
+                $query->andWhere('e.'.$key.' LIKE :param'.$key)
+                    ->setParameter('param'.$key, '%'.$item['value']);
+            }
+
+            // Текст в точности
+            if (isset($item['type']) && ('text_accuracy' === $item['type'] || 'list' === $item['type'])) {
+                $query->andWhere('e.'.$key.' = :param'.$key)
+                    ->setParameter('param'.$key, $item['value']);
+            }
+
+            if (isset($item['type']) && 'date_day' === $item['type']) {
+                $query->andWhere('e.'.$key.' = :param'.$key)
+                    ->setParameter(
+                        'param'.$key,
+                        \DateTimeImmutable::createFromFormat('d.m.Y', $item['value'])
+                    );
+            }
+
+            if (isset($item['type']) && 'date_before' === $item['type']) {
+                $query->andWhere('e.'.$key.' < :param'.$key)
+                    ->setParameter(
+                        'param'.$key,
+                        \DateTimeImmutable::createFromFormat('d.m.Y', $item['value'])
+                    );
+            }
+
+            if (isset($item['type']) && 'date_after' === $item['type']) {
+                $query->andWhere('e.'.$key.' > :param'.$key)
+                    ->setParameter(
+                        'param'.$key,
+                        \DateTimeImmutable::createFromFormat('d.m.Y', $item['value'])
+                    );
+            }
+        }
+
+        return $query;
+    }
+
+    /**
+     * @return float
+     *               Получение опыта работы
+     */
+    private function getWorkExperience(\DateTimeImmutable $dateStart, ?\DateTimeImmutable $dateEnd = null): float
+    {
+        if (null === $dateEnd) {
+            $dateEnd = new \DateTimeImmutable();
+        }
+        $interval = $dateStart->diff($dateEnd);
+
+        return round(fdiv($interval->days, 365.0), 2);
+    }
+
+    /**
+     * @return array
+     *               информация об уволенных сотрудниках по отделам
+     */
+    private function getTotalDismissedByDepartment(\DateTimeImmutable $valueTo, \DateTimeImmutable $valueFrom): array
+    {
+        $query = $this->createQueryBuilder('e');
+        $query
+            ->select('count(e.dateOfDismissal) as count')
+            ->addSelect('e.department')
+            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
+            ->setParameter('dateOfDismissal1', $valueFrom)
+            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
+            ->setParameter('dateOfDismissal2', $valueTo)
+            ->groupBy('e.department');
+        $result = $query->getQuery()->getArrayResult();
+
+        $labels = [];
+        $datasets = [
+            'label' => 'Количество увольнений',
+            'backgroundColor' => '#2191FB',
+            'borderWidth' => 1,
+            'data' => [],
+        ];
+
+        foreach ($result as $key => $item) {
+            $labels[] = $item['department'];
+            $datasets['data'][] = $item['count'];
+        }
+
+        // график уволенных по отделу
+        return [
+            'labels' => $labels,
+            'datasets' => [$datasets],
+        ];
+    }
+
+    /**
+     * @return array
+     *               Информация об уволенных сотрудниках по должностям
+     */
+    private function getTotalDismissedByPosition(\DateTimeImmutable $valueTo, \DateTimeImmutable $valueFrom): array
+    {
+        $query = $this->createQueryBuilder('e');
+        $query
+            ->select('count(e.dateOfDismissal) as count')
+            ->addSelect('e.position')
+            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
+            ->setParameter('dateOfDismissal1', $valueFrom)
+            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
+            ->setParameter('dateOfDismissal2', $valueTo)
+            ->groupBy('e.position');
+        $result = $query->getQuery()->getArrayResult();
+
+        $labels = [];
+        $datasets = [
+            'label' => 'Количество увольнений',
+            'backgroundColor' => '#8CDEDC',
+            'borderWidth' => 1,
+            'data' => [],
+        ];
+
+        foreach ($result as $key => $item) {
+            $labels[] = $item['position'];
+            $datasets['data'][] = $item['count'];
+        }
+
+        // график уволенных по должностям
+        return [
+            'labels' => $labels,
+            'datasets' => [$datasets],
+        ];
+    }
+
+    /**
+     * @return array
+     *               Информация об уволенных по категориям
+     */
+    private function getTotalDismissedByCategory(\DateTimeImmutable $valueTo, \DateTimeImmutable $valueFrom): array
+    {
+        $query = $this->createQueryBuilder('e');
+        $query
+            ->select('count(e.categoryOfDismissal) as count')
+            ->addSelect('e.categoryOfDismissal')
+            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
+            ->setParameter('dateOfDismissal1', $valueFrom)
+            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
+            ->setParameter('dateOfDismissal2', $valueTo)
+            ->groupBy('e.categoryOfDismissal');
+
+        $result = $query->getQuery()->getArrayResult();
+
+        $labels = ['Количество увольнений'];
+        $datasets = [];
+
+        foreach ($result as $key => $item) {
+            $datasets[] = [
+                'label' => self::CATEGORY_TYPE[$item['categoryOfDismissal']],
+                'backgroundColor' => self::COLORS[$key],
+                'borderWidth' => 1,
+                'data' => [$item['count']],
+            ];
+        }
+
+        // график уволенных по категориям
+        return [
+            'labels' => $labels,
+            'datasets' => $datasets,
+        ];
+    }
+
+    /**
+     * @return array
+     *               Информация об уволенных по причинам
+     */
+    private function getTotalDismissedByReason(\DateTimeImmutable $valueTo, \DateTimeImmutable $valueFrom): array
+    {
+        $query = $this->createQueryBuilder('e');
+        $query
+            ->select('count(e.categoryOfDismissal) as count')
+            ->addSelect('e.reasonForDismissal')
+            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
+            ->setParameter('dateOfDismissal1', $valueFrom)
+            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
+            ->setParameter('dateOfDismissal2', $valueTo)
+            ->groupBy('e.reasonForDismissal');
+
+        $result = $query->getQuery()->getArrayResult();
+
+        $labels = [];
+        $datasets = [
+            'label' => 'Количество увольнений',
+            'backgroundColor' => self::COLORS,
+            'borderWidth' => 1,
+            'data' => [],
+        ];
+
+        foreach ($result as $key => $item) {
+            $labels[] = self::REASON_TYPES[$item['reasonForDismissal']];
+            $datasets['data'][] = $item['count'];
+        }
+
+        // график уволенных по причинам
+        return [
+            'labels' => $labels,
+            'datasets' => [$datasets],
+        ];
+    }
+
+    /**
+     * @return array
+     *               Информация об уволенных по стажу работы
+     */
+    private function getTotalDismissedByWorkExperience(
+        \DateTimeImmutable $valueTo,
+        \DateTimeImmutable $valueFrom
+    ): array {
+        $query = $this->createQueryBuilder('e');
+        $query
+            ->select('e')
+            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
+            ->setParameter('dateOfDismissal1', $valueFrom)
+            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
+            ->setParameter('dateOfDismissal2', $valueTo);
+        /**
+         * @var array $result
+         */
+        $result = $query->getQuery()->getArrayResult();
+
+        $labels = ['Количество увольнений'];
+        $datasets = [
+            [
+                'label' => 'Менее 3х месяцев',
+                'backgroundColor' => '#329F5B',
+                'borderWidth' => 1,
+                'data' => [0],
+            ],
+            [
+                'label' => 'до 1 года работы',
+                'backgroundColor' => '#8380B6',
+                'borderWidth' => 1,
+                'data' => [0],
+            ],
+            [
+                'label' => 'до 3х лет работы',
+                'backgroundColor' => '#177E89',
+                'borderWidth' => 1,
+                'data' => [0],
+            ],
+            [
+                'label' => 'свыше 3х лет работы',
+                'backgroundColor' => '#F40076',
+                'borderWidth' => 1,
+                'data' => [0],
+            ],
+        ];
+
+        foreach ($result as $key => $item) {
+            $workExp = $this->getWorkExperience(
+                $item['dateOfEmployment'],
+                $item['dateOfDismissal'],
+            );
+
+            if ($workExp < 0.25) {
+                ++$datasets[0]['data'][0];
+            } elseif ($workExp < 1) {
+                ++$datasets[1]['data'][0];
+            } elseif ($workExp < 3) {
+                ++$datasets[2]['data'][0];
+            } else {
+                ++$datasets[3]['data'][0];
+            }
+        }
+
+        return [
+            'labels' => $labels,
+            'datasets' => $datasets,
+        ];
+    }
+
+    /**
+     * @return int
+     *             Общее количество уволенных
+     */
+    private function getTotalDismissedEmployees(\DateTimeImmutable $valueTo, \DateTimeImmutable $valueFrom): int
+    {
+        $query = $this->createQueryBuilder('e');
+        $query
+            ->select('e')
+            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
+            ->setParameter('dateOfDismissal1', $valueFrom)
+            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
+            ->setParameter('dateOfDismissal2', $valueTo);
+        /**
+         * @var array $result
+         */
+        $result = $query->getQuery()->getArrayResult();
+
+        // всего уволено
+        return count($result);
+    }
+
+    /**
+     * @return float
+     *               Средний стаж работы
+     */
+    private function getAverageWorkExperience(\DateTimeImmutable $valueTo, \DateTimeImmutable $valueFrom): float
+    {
+        $query = $this->createQueryBuilder('e');
+        $query
+            ->select('e')
+            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
+            ->setParameter('dateOfDismissal1', $valueFrom)
+            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
+            ->setParameter('dateOfDismissal2', $valueTo);
+        /**
+         * @var array $result
+         */
+        $result = $query->getQuery()->getArrayResult();
+
+        // всего уволено
+        $totalDismissed = count($result);
+
+        // средний стаж работы
+        $avgWorkExp = 0;
+
+        foreach ($result as $key => $item) {
+            $workExp = $this->getWorkExperience(
+                $item['dateOfEmployment'],
+                $item['dateOfDismissal'],
+            );
+            $avgWorkExp += $workExp;
+        }
+
+        return fdiv($avgWorkExp, $totalDismissed);
+    }
+
+    /**
+     * @return int
+     *             Количество сотрудников на расчетный период
+     */
+    private function getTotalNumberOfEmployees(\DateTimeImmutable $valueTo): int
+    {
+        $query = $this->createQueryBuilder('e');
+        $query
+            ->select('e')
+            ->andWhere('e.status != 3 OR (e.status = 3 AND e.dateOfDismissal >= :dateOfDismissal)')
+            ->setParameter('dateOfDismissal', $valueTo);
+
+        return count($query->getQuery()->getArrayResult());
+    }
+
+    /**
+     * @return int
+     *             Количество сотрудников в декрете
+     */
+    private function getTotalNumberOfDecreeEmployees(): int
+    {
+        $query = $this->createQueryBuilder('e');
+        $query
+            ->select('e');
+        $query->andWhere('e.status = 2');
+
+        return count($query->getQuery()->getArrayResult());
+    }
+
+    /**
+     * @return int
+     *             Количество принятых сотрудников за расчетный период
+     */
+    private function getTotalNumberOfAcceptedEmployees(\DateTimeImmutable $valueTo, \DateTimeImmutable $valueFrom): int
+    {
+        $query = $this->createQueryBuilder('e');
+        $query
+            ->andWhere('e.dateOfEmployment >= :dateOfEmployment1')
+            ->setParameter('dateOfEmployment1', $valueFrom)
+            ->andWhere('e.dateOfEmployment <= :dateOfEmployment2')
+            ->setParameter('dateOfEmployment2', $valueTo);
+
+        return count($query->getQuery()->getArrayResult());
+    }
+
+    /**
+     * @return array
+     *               Среднесписочная численность и данные по численности на каждый день
+     */
+    private function getNumberOfAverageEmployees(
+        \DateTimeImmutable $valueTo,
+        \DateTimeImmutable $valueFrom,
+        int $constNumberOfEmployees
+    ): array {
+        $labels = [];
+        $datasets = [
+            'label' => 'Списочная численность по всей компании',
+            'backgroundColor' => '#4056A1',
+            'borderWidth' => 1,
+            'data' => [],
+        ];
+
+        $datasets['label'] .=
+            ' за период с '.$valueFrom->format('d.m.Y').' по '.$valueTo->format('d.m.Y');
+
+        // Среднесписочная численность
+
+        $periodEndDate = $valueTo;
+
+        $query = $this->createQueryBuilder('e');
+        $query
+            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
+            ->setParameter('dateOfDismissal1', $valueFrom)
+            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
+            ->setParameter('dateOfDismissal2', $valueTo);
+
+        $result = $query->getQuery()->getArrayResult();
+
+        $numberOfAverageEmployees = 0;
+
+        $numberOfDays = $valueTo->diff($valueFrom)->days + 1;
+
+        while ($periodEndDate >= $valueFrom) {
+            $currentIncrement = $constNumberOfEmployees;
+            // пробег по уволенным сотрудникам
+            foreach ($result as $item) {
+                if ($item['dateOfDismissal'] > $periodEndDate) {
+                    ++$currentIncrement;
+                }
+            }
+            $numberOfAverageEmployees += $currentIncrement;
+            $labels[] = $periodEndDate->format('d.m.Y');
+            $datasets['data'][] = $currentIncrement;
+            $periodEndDate = $periodEndDate->modify('-1 day');
+        }
+
+        $datasets['data'] = array_reverse($datasets['data']);
+
+        return [
+            'number' => round(fdiv($numberOfAverageEmployees, $numberOfDays), 3),
+            'chart' => [
+                'labels' => $labels,
+                'datasets' => [$datasets],
+            ],
+        ];
+    }
+
+    private function getNumberVoluntarilyDismissed(\DateTimeImmutable $valueTo, \DateTimeImmutable $valueFrom): int
+    {
+        $query = $this->createQueryBuilder('e');
+        $query
+            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
+            ->setParameter('dateOfDismissal1', $valueFrom)
+            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
+            ->setParameter('dateOfDismissal2', $valueTo)
+            ->andWhere('e.categoryOfDismissal = 1');
+
+        return count($query->getQuery()->getArrayResult());
+    }
+
+    private function getNumberForcedDismissed(\DateTimeImmutable $valueTo, \DateTimeImmutable $valueFrom): int
+    {
+        $query = $this->createQueryBuilder('e');
+        $query
+            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
+            ->setParameter('dateOfDismissal1', $valueFrom)
+            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
+            ->setParameter('dateOfDismissal2', $valueTo)
+            ->andWhere('e.categoryOfDismissal = 2');
+
+        return count($query->getQuery()->getArrayResult());
+    }
+
+    private function getNumberUndesirableDismissed(\DateTimeImmutable $valueTo, \DateTimeImmutable $valueFrom): int
+    {
+        $query = $this->createQueryBuilder('e');
+        $query
+            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
+            ->setParameter('dateOfDismissal1', $valueFrom)
+            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
+            ->setParameter('dateOfDismissal2', $valueTo)
+            ->andWhere('e.categoryOfDismissal = 3');
+
+        return count($query->getQuery()->getArrayResult());
     }
 }

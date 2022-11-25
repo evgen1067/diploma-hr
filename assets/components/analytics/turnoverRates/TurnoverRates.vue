@@ -79,7 +79,7 @@
           <div class="col-6">
             <va-card>
               <va-card-content>
-                <hr-chart :data="turnoverData.turnoverChart" type="bar" />
+                <hr-chart :data="turnoverData.turnoverChart" type="horizontal-bar" />
               </va-card-content>
             </va-card>
           </div>

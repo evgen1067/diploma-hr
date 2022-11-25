@@ -1,68 +1,7 @@
-import { filtersList } from './Filters';
-import { EmployeeApi } from '../../api/employee/EmployeeApi';
 import cloneDeep from 'lodash.clonedeep';
 
-class Employee {
-  // получение списка сотрудников
-  static async getEmployees(filter, page, perPage) {
-    // очистка фильтра перед отправкой от лишней информации
-    for (let key in filter) {
-      delete filter[key].iconName;
-      delete filter[key].label;
-      if (filter[key].type !== 'number_inequality' && filter[key].value === '') {
-        delete filter[key];
-      } else if (
-        filter[key].type === 'number_inequality' &&
-        filter[key].valueTo.trim() === '' &&
-        filter[key].valueFrom.trim() === ''
-      ) {
-        delete filter[key];
-      } else if (filter[key].type === 'list') {
-        delete filter[key].listItems;
-      } else if (filter[key].type.includes('date')) {
-        if (!filter[key]?.value || filter[key]?.value.length < 1) {
-          delete filter[key];
-        } else {
-          filter[key].value = filter[key].value.toLocaleDateString();
-          console.log(filter[key].value);
-        }
-      }
-    }
-    // запрос на бэкенд за информацией о таблице
-    return EmployeeApi.getEmployees({
-      filter: JSON.stringify(filter),
-      page: page,
-      perPage: perPage,
-    });
-  }
-
-  // создание сотрудника
-  static async createEmployee(data) {
-    // запрос на бэкенд для создания сотрудника
-    return await EmployeeApi.createEmployee(data);
-  }
-
-  // удаление сотрудников по id
-  static async deleteEmployeesByIds(data) {
-    // запрос на бэкенд для удаления сотрудников
-    return await EmployeeApi.deleteEmployees(data);
-  }
-
-  // изменение сотрудника
-  static async editEmployee(data) {
-    // запрос на бэкенд для изменения сотрудника
-    return await EmployeeApi.updateEmployee(data);
-  }
-
-  // получение сотрудника по id
-  static async getEmployeeById(id) {
-    // запрос на бэкенд для получения сотрудника по id
-    return await EmployeeApi.getEmployee(id);
-  }
-}
-
 // Набор атрибутов сотрудника
-const dataColumns = [
+const employeeData = [
   {
     key: 'fullName',
     datatype: 'string',
@@ -95,15 +34,15 @@ const dataColumns = [
     listItems: [
       {
         label: 'работает',
-        num: 1,
+        listValueId: 1,
       },
       {
         label: 'декрет',
-        num: 2,
+        listValueId: 2,
       },
       {
         label: 'уволен',
-        num: 3,
+        listValueId: 3,
       },
     ],
   },
@@ -119,43 +58,43 @@ const dataColumns = [
     listItems: [
       {
         label: 'не пройден испытательный срок',
-        num: 1,
+        listValueId: 1,
       },
       {
         label: 'проблемы с дисциплиной',
-        num: 2,
+        listValueId: 2,
       },
       {
         label: 'не справлялся с поставленными задачами',
-        num: 3,
+        listValueId: 3,
       },
       {
         label: 'сокращение',
-        num: 4,
+        listValueId: 4,
       },
       {
         label: 'предложение о работе с высокой заработной платой',
-        num: 5,
+        listValueId: 5,
       },
       {
         label: 'потерял ценность',
-        num: 6,
+        listValueId: 6,
       },
       {
         label: 'не видит для себя профессионального развития',
-        num: 7,
+        listValueId: 7,
       },
       {
         label: 'хочет сменить должность/направление',
-        num: 8,
+        listValueId: 8,
       },
       {
         label: 'выгорание',
-        num: 9,
+        listValueId: 9,
       },
       {
         label: 'релокация',
-        num: 10,
+        listValueId: 10,
       },
     ],
   },
@@ -166,20 +105,114 @@ const dataColumns = [
     listItems: [
       {
         label: 'добровольная',
-        num: 1,
+        listValueId: 1,
       },
       {
         label: 'принудительная',
-        num: 2,
+        listValueId: 2,
       },
       {
         label: 'нежелательная',
-        num: 3,
+        listValueId: 3,
       },
     ],
   },
   // 'level',
 ];
+
+// Фильтры для полей с datatype = string
+const stringFilters = [
+  {
+    iconName: 'font',
+    label: 'Текст содержит..',
+    value: '',
+    type: 'text_contains',
+  },
+  {
+    iconName: 'font',
+    label: 'Текст не содержит..',
+    value: '',
+    type: 'text_not_contains',
+  },
+  {
+    iconName: 'font',
+    label: 'Текст начинается с..',
+    value: '',
+    type: 'text_start',
+  },
+  {
+    iconName: 'font',
+    label: 'Текст заканчивается на..',
+    value: '',
+    type: 'text_end',
+  },
+  {
+    iconName: 'font',
+    label: 'Текст в точности..',
+    value: '',
+    type: 'text_accuracy',
+  },
+];
+
+// Фильтры для полей с datatype = number
+const numberFilters = [
+  {
+    iconName: 'equals',
+    label: 'Равно..',
+    value: '',
+    type: 'number_equal',
+  },
+  {
+    iconName: 'not-equal',
+    label: 'Не равно..',
+    value: '',
+    type: 'number_not_equal',
+  },
+  {
+    iconName: 'less-than',
+    label: 'Строгое неравенство..',
+    valueFrom: '',
+    valueTo: '',
+    type: 'number_inequality',
+    isStrict: true,
+  },
+  {
+    iconName: 'less-than-equal',
+    label: 'Нестрогое неравенство..',
+    valueFrom: '',
+    valueTo: '',
+    type: 'number_inequality',
+    isStrict: false,
+  },
+];
+
+// Фильтры для полей с datatype = date
+const dateFilters = [
+  {
+    iconName: 'calendar-day',
+    label: 'Дата..',
+    value: null,
+    type: 'date_day',
+  },
+  {
+    iconName: 'calendar-day',
+    label: 'Дата до..',
+    value: null,
+    type: 'date_before',
+  },
+  {
+    iconName: 'calendar-day',
+    label: 'Дата после..',
+    value: null,
+    type: 'date_after',
+  },
+];
+
+const filtersList = {
+  string: stringFilters,
+  number: numberFilters,
+  date: dateFilters,
+};
 
 // запрос на бэкенд для добавления новой записи
 let emptyEmployeeRequest = {},
@@ -188,25 +221,33 @@ let emptyEmployeeRequest = {},
   // изначальный набор фильтров
   filter = {};
 
-for (let i = 0; i < dataColumns.length; i++) {
-  emptyEmployeeRequest[dataColumns[i].key] = '';
+for (let i = 0; i < employeeData.length; i++) {
+  emptyEmployeeRequest[employeeData[i].key] = '';
   columns.push({
-    key: dataColumns[i].key,
+    key: employeeData[i].key,
     sortable: true,
-    datatype: dataColumns[i].datatype,
+    datatype: employeeData[i].datatype,
     tdAlign: 'center',
     thAlign: 'center',
   });
-  filter[dataColumns[i].key] =
-    dataColumns[i].datatype !== 'list'
-      ? cloneDeep(filtersList[dataColumns[i].datatype][0])
+  filter[employeeData[i].key] =
+    employeeData[i].datatype !== 'list'
+      ? cloneDeep(filtersList[employeeData[i].datatype][0])
       : {
           iconName: '',
           label: '',
           value: '',
           type: 'list',
-          listItems: dataColumns[i].listItems,
+          listItems: employeeData[i].listItems,
         };
 }
 
-export { emptyEmployeeRequest, dataColumns, filter, columns, Employee };
+const employeeInfoTable = {
+  columns: columns,
+  request: emptyEmployeeRequest,
+  filter: filter,
+  dataInfo: employeeData,
+  filtersList: filtersList,
+};
+
+export { employeeInfoTable };

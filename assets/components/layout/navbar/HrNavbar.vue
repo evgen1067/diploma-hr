@@ -15,11 +15,11 @@
 </template>
 
 <script>
-import { VaNavbar, VaIcon } from 'vuestic-ui';
+import { VaNavbar } from 'vuestic-ui';
 import VaIconMenuCollapsed from '@/components/icons/VaIconMenuCollapsed';
 export default {
   name: 'HrNavbar',
-  components: {VaIcon, VaIconMenuCollapsed, VaNavbar },
+  components: { VaIconMenuCollapsed, VaNavbar },
   methods: {
     toggleSidebar() {
       this.$store.dispatch('toggleSidebarMinimized');
@@ -69,16 +69,6 @@ export default {
 .app-navbar-center {
   display: flex;
   align-items: center;
-  @media screen and (max-width: 1200px) {
-    &__github-button {
-      display: none;
-    }
-  }
-  @media screen and (max-width: 950px) {
-    &__text {
-      display: none;
-    }
-  }
 }
 
 .cursor-pointer {

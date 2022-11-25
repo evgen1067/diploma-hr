@@ -4,12 +4,9 @@ namespace App\Controller;
 
 use App\Entity\Employee;
 use App\Repository\EmployeeRepository;
-use DateTimeImmutable;
 use JMS\Serializer\Serializer;
 use JMS\Serializer\SerializerBuilder;
-use JsonException;
 use Knp\Component\Pager\PaginatorInterface;
-use PHPUnit\Util\Json;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -21,20 +18,20 @@ class EmployeeController extends AbstractController
 {
     private Serializer $serializer;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->serializer = SerializerBuilder::create()->build();
     }
 
     /**
-     * @throws JsonException
+     * @throws \JsonException
      */
     #[Route('/employees', name: 'app_employees', methods: ['GET'])]
     public function employees(
         Request $request,
         EmployeeRepository $employeeRepository,
         PaginatorInterface $paginator
-    ): JsonResponse
-    {
+    ): JsonResponse {
         // номер страницы
         $page = $request->query->get('page') ?: 1;
 
@@ -46,7 +43,7 @@ class EmployeeController extends AbstractController
         // записи до пагинации
         $tableData = $employeeRepository->getTableData($filter);
 
-        if ($perPage !== 'Все') {
+        if ('Все' !== $perPage) {
             // пагинация
             $tableData = $paginator->paginate(
                 $tableData,
@@ -72,6 +69,7 @@ class EmployeeController extends AbstractController
         $response = new JsonResponse();
         $response->setStatusCode(Response::HTTP_OK);
         $response->setContent($tableData);
+
         return $response;
     }
 
@@ -79,8 +77,7 @@ class EmployeeController extends AbstractController
     public function employee(
         int $id,
         EmployeeRepository $employeeRepository
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $employee = $employeeRepository->findEmployeeInArray($id);
 
         $response = new JsonResponse();
@@ -88,27 +85,28 @@ class EmployeeController extends AbstractController
         if (!$employee) {
             $response->setStatusCode(Response::HTTP_NOT_FOUND);
             $content = $this->serializer->serialize([
-                'message' => 'Сотрудник не найден'
+                'message' => 'Сотрудник не найден',
             ], 'json');
             $response->setContent($content);
+
             return $response;
         }
 
         $response->setStatusCode(Response::HTTP_OK);
         $content = $this->serializer->serialize($employee, 'json');
         $response->setContent($content);
+
         return $response;
     }
 
     /**
-     * @throws JsonException
+     * @throws \JsonException
      */
     #[Route('/employees/new', name: 'app_employees_new', methods: ['POST'])]
     public function new(
         Request $request,
         EmployeeRepository $employeeRepository
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $dataForCreate = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
 
         $response = new JsonResponse();
@@ -130,8 +128,10 @@ class EmployeeController extends AbstractController
         if (count($content) > 0) {
             $response->setStatusCode(Response::HTTP_BAD_REQUEST);
             $response->setContent($this->serializer->serialize(
-                $content, 'json'
+                $content,
+                'json'
             ));
+
             return $response;
         }
 
@@ -143,9 +143,9 @@ class EmployeeController extends AbstractController
             ->setPosition($position)
             ->setStatus($status);
 
-        if ($employee->getStatus() === 'уволен') {
+        if ('уволен' === $employee->getStatus()) {
             if ($dateOfDismissal) {
-                $dateOfDismissal = DateTimeImmutable::createFromFormat('Y-m-d', $dateOfDismissal);
+                $dateOfDismissal = \DateTimeImmutable::createFromFormat('Y-m-d', $dateOfDismissal);
                 $employee->setDateOfDismissal($dateOfDismissal);
             }
 
@@ -162,19 +162,19 @@ class EmployeeController extends AbstractController
 
         $response->setStatusCode(Response::HTTP_CREATED);
         $response->setContent($this->serializer->serialize(['message' => 'Сотрудник успешно создан'], 'json'));
+
         return $response;
     }
 
     /**
-     * @throws JsonException
+     * @throws \JsonException
      */
     #[Route('/employees/{id}', name: 'app_employees_put', methods: ['PUT'])]
     public function edit(
         int $id,
         Request $request,
         EmployeeRepository $employeeRepository
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $dataForCreate = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
 
         $response = new JsonResponse();
@@ -196,8 +196,10 @@ class EmployeeController extends AbstractController
         if (count($content) > 0) {
             $response->setStatusCode(Response::HTTP_BAD_REQUEST);
             $response->setContent($this->serializer->serialize(
-                $content, 'json'
+                $content,
+                'json'
             ));
+
             return $response;
         }
 
@@ -206,9 +208,10 @@ class EmployeeController extends AbstractController
         if (!$employee) {
             $response->setStatusCode(Response::HTTP_NOT_FOUND);
             $content = $this->serializer->serialize([
-                'message' => 'Сотрудник не найден'
+                'message' => 'Сотрудник не найден',
             ], 'json');
             $response->setContent($content);
+
             return $response;
         }
 
@@ -219,9 +222,9 @@ class EmployeeController extends AbstractController
             ->setPosition($position)
             ->setStatus($status);
 
-        if ($employee->getStatus() === 'уволен') {
+        if ('уволен' === $employee->getStatus()) {
             if ($dateOfDismissal) {
-                $dateOfDismissal = DateTimeImmutable::createFromFormat('Y-m-d', $dateOfDismissal);
+                $dateOfDismissal = \DateTimeImmutable::createFromFormat('Y-m-d', $dateOfDismissal);
                 $employee->setDateOfDismissal($dateOfDismissal);
             }
 
@@ -238,18 +241,18 @@ class EmployeeController extends AbstractController
 
         $response->setStatusCode(Response::HTTP_OK);
         $response->setContent($this->serializer->serialize(['message' => 'Сотрудник успешно изменен'], 'json'));
+
         return $response;
     }
 
     /**
-     * @throws JsonException
+     * @throws \JsonException
      */
     #[Route('/employees/delete', name: 'app_employees_delete', methods: ['POST'])]
     public function delete(
         Request $request,
         EmployeeRepository $employeeRepository
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $dataForDelete = json_decode($request->getContent(), false, 512, JSON_THROW_ON_ERROR);
         foreach ($dataForDelete as $id) {
             $employeeRepository->remove($employeeRepository->find($id), true);
@@ -262,6 +265,7 @@ class EmployeeController extends AbstractController
             'message' => 'Сотрудники успешно удалены',
             'color' => 'success',
         ], 'json'));
+
         return $response;
     }
 

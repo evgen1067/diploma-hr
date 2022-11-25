@@ -29,7 +29,7 @@
             :options="inpInfo.listItems"
             :rules="inpInfo?.rule ? inpInfo?.rule : []"
             text-by="label"
-            value-by="num"
+            value-by="listValueId"
             class="w-100 mb-3"
             clearable
             color="#4056A1"
@@ -216,14 +216,14 @@
                 v-model="tableFilter.filter[col.key].value"
                 :label="
                   tableFilter.filter[col.key].label
-                    ? tableFilter.filter[col.key].listItems.find(x => x.num === tableFilter.filter[col.key].value).label
+                    ? tableFilter.filter[col.key].listItems.find(x => x.listValueId === tableFilter.filter[col.key].value).label
                     : 'Выбор'
                 "
                 color="#4056A1"
                 class="w-100"
                 :options="tableFilter.filter[col.key].listItems"
                 text-by="label"
-                value-by="num"
+                value-by="listValueId"
                 @update:model-value="search"
                 clearable
               ></va-select>
@@ -263,13 +263,12 @@ import {
   VaPopover,
   VaSelect,
 } from 'vuestic-ui';
-import HrModal from '../../ui/hrModal/HrModal';
-import { dataColumns, emptyEmployeeRequest, columns, filter, Employee } from './Employee';
-import { filtersList } from './Filters';
-import HrSpinner from '../../ui/hrSpinner/HrSpinner';
+import { employeeInfoTable } from './Employee';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import cloneDeep from 'lodash.clonedeep';
-import { EmployeeApi } from '../../api/employee/EmployeeApi';
+import { cloneDeep } from "lodash";
+import { EmployeeApi } from '@/api/employee/EmployeeApi';
+import HrSpinner from '@/ui/hrSpinner/HrSpinner';
+import HrModal from '@/ui/hrModal/HrModal';
 export default {
   name: 'EmployeeTable',
   components: {
@@ -316,7 +315,7 @@ export default {
     add: true,
 
     // список фильтров
-    filtersList: filtersList,
+    filtersList: employeeInfoTable.filtersList,
     countRowsOptions: [10, 50, 100, 'Все'],
     tableSettings: {
       wrapperSize: 528,
@@ -324,7 +323,7 @@ export default {
     },
   }),
   async created() {
-    this.tableFilter.filter = filter;
+    this.tableFilter.filter = employeeInfoTable.filter;
     await this.updateTableData();
   },
   // вотчер на изменение страницы и фильтра
@@ -351,13 +350,12 @@ export default {
     // обновление информации по таблице
     async updateTableData() {
       this.loading = true;
-
-      this.table = await Employee.getEmployees(
-        cloneDeep(this.tableFilter.filter),
-        this.tablePaginator.page,
-        this.tablePaginator.perPage,
-      );
-      this.table.columns = columns;
+      this.table = await EmployeeApi.getEmployees({
+        filter: JSON.stringify(this.clearFilter()),
+        page: this.tablePaginator.page,
+        perPage: this.tablePaginator.perPage,
+      });
+      this.table.columns = employeeInfoTable.columns;
       this.table.selectedItems = [];
       this.loading = false;
 
@@ -397,8 +395,8 @@ export default {
     showAddEmployeeModal() {
       this.add = true;
       this.modalTitle = 'Создание информации о новом сотруднике';
-      this.request = cloneDeep(emptyEmployeeRequest);
-      this.form = cloneDeep(dataColumns);
+      this.request = cloneDeep(employeeInfoTable.request);
+      this.form = cloneDeep(employeeInfoTable.dataInfo);
 
       this.$nextTick(() => {
         this.$refs.employeeModal.openModal();
@@ -411,7 +409,7 @@ export default {
       // получение информации о сотруднике
       this.modalTitle = 'Обновление информации о существующем сотруднике';
       let result = await EmployeeApi.getEmployee(event.item.id);
-      this.form = cloneDeep(dataColumns);
+      this.form = cloneDeep(dataInfo);
 
       // отключаем лоадер
       this.loading = false;
@@ -450,6 +448,20 @@ export default {
       }
       this.cardLoading = false;
       await this.updateTableData();
+    },
+    clearFilter() {
+      let filter = cloneDeep(this.tableFilter.filter);
+      for (let key in filter) {
+        delete filter[key].iconName;
+        delete filter[key].label;
+        delete filter[key]?.listItems;
+        if (filter[key]?.value === '' || !filter[key]?.value) {
+          delete filter[key];
+        } else if (key.includes('date')) {
+          filter[key].value = filter[key].value.toLocaleDateString();
+        }
+      }
+      return filter;
     },
   },
   computed: {

@@ -3,38 +3,12 @@
 namespace App\Entity;
 
 use App\Repository\EmployeeRepository;
-use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: EmployeeRepository::class)]
 class Employee
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
-
-    # ФИО
-    #[ORM\Column(length: 512)]
-    private ?string $fullName = null;
-
-    # Дата трудоустройства
-    #[ORM\Column(type: Types::DATE_IMMUTABLE)]
-    private ?DateTimeImmutable $dateOfEmployment = null;
-
-    # Отдел
-    #[ORM\Column(length: 255)]
-    private ?string $department = null;
-
-    # Должность
-    #[ORM\Column(length: 255)]
-    private ?string $position = null;
-
-    # Статус
-    #[ORM\Column(type: Types::SMALLINT)]
-    private ?int $status = null;
-
     private const STATUS_TYPES = [
         1 => 'работает',
         2 => 'декрет',
@@ -46,14 +20,6 @@ class Employee
         'декрет' => 2,
         'уволен' => 3,
     ];
-
-    # Дата увольнения
-    #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
-    private ?DateTimeImmutable $dateOfDismissal = null;
-
-    # Причина увольнения
-    #[ORM\Column(type: Types::SMALLINT, nullable: true)]
-    private ?int $reasonForDismissal = null;
 
     private const REASON_TYPES = [
         1 => 'не пройден испытательный срок',
@@ -81,10 +47,6 @@ class Employee
         'релокация' => 10,
     ];
 
-    # Категория увольнения
-    #[ORM\Column(type: Types::SMALLINT, nullable: true)]
-    private ?int $categoryOfDismissal = null;
-
     private const CATEGORY_TYPE = [
         1 => 'добровольная',
         2 => 'принудительная',
@@ -97,7 +59,44 @@ class Employee
         'нежелательная' => 3,
     ];
 
-    # TODO LEVEL
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
+
+    // ФИО
+    #[ORM\Column(length: 512)]
+    private ?string $fullName = null;
+
+    // Дата трудоустройства
+    #[ORM\Column(type: Types::DATE_IMMUTABLE)]
+    private ?\DateTimeImmutable $dateOfEmployment = null;
+
+    // Отдел
+    #[ORM\Column(length: 255)]
+    private ?string $department = null;
+
+    // Должность
+    #[ORM\Column(length: 255)]
+    private ?string $position = null;
+
+    // Статус
+    #[ORM\Column(type: Types::SMALLINT)]
+    private ?int $status = null;
+
+    // Дата увольнения
+    #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $dateOfDismissal = null;
+
+    // Причина увольнения
+    #[ORM\Column(type: Types::SMALLINT, nullable: true)]
+    private ?int $reasonForDismissal = null;
+
+    // Категория увольнения
+    #[ORM\Column(type: Types::SMALLINT, nullable: true)]
+    private ?int $categoryOfDismissal = null;
+
+    // TODO LEVEL
 //    #[ORM\Column(type: Types::SMALLINT)]
 //    private ?int $level = null;
 //
@@ -132,12 +131,12 @@ class Employee
         return $this;
     }
 
-    public function getDateOfEmployment(): ?DateTimeImmutable
+    public function getDateOfEmployment(): ?\DateTimeImmutable
     {
         return $this->dateOfEmployment;
     }
 
-    public function setDateOfEmployment(DateTimeImmutable $dateOfEmployment): self
+    public function setDateOfEmployment(\DateTimeImmutable $dateOfEmployment): self
     {
         $this->dateOfEmployment = $dateOfEmployment;
 
@@ -192,12 +191,12 @@ class Employee
         return $this;
     }
 
-    public function getDateOfDismissal(): ?DateTimeImmutable
+    public function getDateOfDismissal(): ?\DateTimeImmutable
     {
         return $this->dateOfDismissal;
     }
 
-    public function setDateOfDismissal(?DateTimeImmutable $dateOfDismissal): self
+    public function setDateOfDismissal(?\DateTimeImmutable $dateOfDismissal): self
     {
         $this->dateOfDismissal = $dateOfDismissal;
 
