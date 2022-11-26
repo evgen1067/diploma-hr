@@ -6,31 +6,37 @@ const employeeData = [
     key: 'fullName',
     datatype: 'string',
     label: 'ФИО',
+    rule: [value => value.trim().length > 0 || 'ФИО не может быть пустым'],
   },
   {
     key: 'dateOfEmployment',
     datatype: 'date',
     label: 'Дата трудоустройства',
+    rule: [value => value.trim().length > 0 || 'Дата трудоустройства не может быть пустым'],
   },
   {
     key: 'workExperience',
     datatype: 'number',
-    label: 'Опыт работы',
+    label: 'Стаж работы',
+    rule: [value => value.trim().length > 0 || 'Стаж работы не может быть пустым'],
   },
   {
     key: 'department',
     datatype: 'string',
     label: 'Отдел',
+    rule: [value => value.trim().length > 0 || 'Отдел не может быть пустым'],
   },
   {
     key: 'position',
     datatype: 'string',
     label: 'Должность',
+    rule: [value => value.trim().length > 0 || 'Должность не может быть пустым'],
   },
   {
     key: 'status',
     datatype: 'list',
     label: 'Статус',
+    rule: [value => [1, 2, 3].includes(value) || 'Статус не может быть не выбран'],
     listItems: [
       {
         label: 'работает',

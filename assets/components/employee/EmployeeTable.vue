@@ -4,7 +4,7 @@
       <va-content class="content">
         <h4>{{ modalTitle }}</h4>
       </va-content>
-      <va-form ref="form" tag="form" @submit.prevent="handleSubmit">
+      <va-form ref="form" tag="form" @validation="validation = $event" @submit.prevent="handleSubmit">
         <template v-for="(inpInfo, key) in form" :key="key">
           <va-input
             v-if="inpInfo.datatype === 'string'"
@@ -311,6 +311,8 @@ export default {
     form: [],
     // заголовок модального окна (добавление / апдейт)
     modalTitle: 'Новый сотрудник',
+    // валидация
+    validation: null,
     // флаг, если true - запрос к добавлению, false - к обновлению
     add: true,
 
@@ -409,7 +411,7 @@ export default {
       // получение информации о сотруднике
       this.modalTitle = 'Обновление информации о существующем сотруднике';
       let result = await EmployeeApi.getEmployee(event.item.id);
-      this.form = cloneDeep(dataInfo);
+      this.form = cloneDeep(employeeInfoTable.dataInfo);
 
       // отключаем лоадер
       this.loading = false;
@@ -428,26 +430,28 @@ export default {
       // валидация формы
       this.$refs.form.validate();
 
-      // если прошли, запускаем лоадер и делаем запрос к апи
-      this.cardLoading = true;
-      let result = '';
-      if (this.add) {
-        // создание нового сотрудника
-        result = await EmployeeApi.createEmployee(this.request);
-      } else {
-        // апдейт существующего
-        result = await EmployeeApi.updateEmployee(this.request.id, this.request);
+      if (this.validation) {
+        // если прошли, запускаем лоадер и делаем запрос к апи
+        this.cardLoading = true;
+        let result = '';
+        if (this.add) {
+          // создание нового сотрудника
+          result = await EmployeeApi.createEmployee(this.request);
+        } else {
+          // апдейт существующего
+          result = await EmployeeApi.updateEmployee(this.request.id, this.request);
+        }
+        if (result.status === 400) {
+          result.data.forEach(x => {
+            this.toast(x.message, 'danger');
+          });
+        } else {
+          this.toast(result.data.message, 'success');
+          this.$refs.employeeModal.closeModal();
+        }
+        this.cardLoading = false;
+        await this.updateTableData();
       }
-      if (result.status === 400) {
-        result.data.forEach(x => {
-          this.toast(x.message, 'danger');
-        });
-      } else {
-        this.toast(result.data.message, 'success');
-        this.$refs.employeeModal.closeModal();
-      }
-      this.cardLoading = false;
-      await this.updateTableData();
     },
     clearFilter() {
       let filter = cloneDeep(this.tableFilter.filter);
