@@ -45,12 +45,12 @@ class AppFixtures extends Fixture
         $format = 'd.m.Y';
 
         foreach ($csv as $i => $iValue) {
-            $faker = Faker\Factory::create('ru_RU');
+            $person = new Person();
             $employee = new Employee();
             $csv[$i][1] = \DateTimeImmutable::createFromFormat($format, $iValue[1]);
             $csv[$i][5] = self::REVERSE_STATUS_TYPES[$iValue[5]];
             $employee
-                ->setFullName($faker->name)
+                ->setFullName($person->getFullName())
                 ->setDateOfEmployment($csv[$i][1])
                 ->setDepartment($csv[$i][3])
                 ->setPosition($csv[$i][4])
