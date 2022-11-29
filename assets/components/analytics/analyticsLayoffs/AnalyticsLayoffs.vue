@@ -72,14 +72,14 @@
           </div>
         </div>
         <div class="row mb-3">
-          <div class="col-6">
+          <div class="col-5">
             <va-card>
               <va-card-content>
                 <hr-chart style="height: 800px" :data="layoffsInfo.departmentChart" type="horizontal-bar" />
               </va-card-content>
             </va-card>
           </div>
-          <div class="col-6">
+          <div class="col-7">
             <va-card>
               <va-card-content>
                 <hr-chart style="height: 800px" :data="layoffsInfo.positionChart" type="horizontal-bar" />
@@ -121,7 +121,7 @@ import HrCard from "../../../ui/hrCard/HrCard";
 
 export default {
   name: 'AnalyticsLayoffs',
-  components: {HrCard, HrChart, VaCardContent, VaCard, VaPopover, VaDateInput, HrSpinner },
+  components: { HrCard, HrChart, VaCardContent, VaCard, VaPopover, VaDateInput, HrSpinner },
   async created() {
     this.defaultSettings();
     await this.updateChartData();
@@ -139,6 +139,13 @@ export default {
     layoffsInfo: null,
   }),
   methods: {
+    toast(message, color) {
+      this.$vaToast.init({
+        message: message,
+        color: color,
+        position: 'bottom-right',
+      });
+    },
     // настройки по умолчанию
     defaultSettings() {
       this.filter.valueTo = new Date();
@@ -155,6 +162,7 @@ export default {
         this.loading = true;
         this.layoffsInfo = await ChartApi.getLayoffsInfo(this.clearFilter());
         this.loading = false;
+        this.toast('Данные загружены', 'success');
       }
     },
     // очистка фильтра

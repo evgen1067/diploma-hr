@@ -76,10 +76,33 @@
           </div>
         </div>
         <div class="row mb-3">
-          <div class="col-6">
+          <div class="col-4">
             <va-card>
               <va-card-content>
                 <hr-chart :data="turnoverData.turnoverChart" type="horizontal-bar" />
+              </va-card-content>
+            </va-card>
+          </div>
+          <div class="col-8">
+            <va-card>
+              <va-card-content>
+                <hr-chart :data="turnoverData.turnoverChartByWe" type="horizontal-bar" />
+              </va-card-content>
+            </va-card>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-5">
+            <va-card>
+              <va-card-content>
+                <hr-chart style="height: 800px" :data="turnoverData.turnoverChartByDep" type="horizontal-bar" />
+              </va-card-content>
+            </va-card>
+          </div>
+          <div class="col-7">
+            <va-card>
+              <va-card-content>
+                <hr-chart style="height: 800px" :data="turnoverData.turnoverChartByPos" type="horizontal-bar" />
               </va-card-content>
             </va-card>
           </div>
@@ -134,7 +157,7 @@ export default {
     defaultSettings() {
       this.filter.valueTo = new Date();
       this.filter.valueFrom = new Date();
-      this.filter.valueFrom.setMonth(this.filter.valueFrom.getMonth() - 1);
+      this.filter.valueFrom.setMonth(this.filter.valueFrom.getMonth() - 36);
       this.defaultDate = {
         valueFrom: this.filter.valueFrom.toLocaleDateString(),
         valueTo: this.filter.valueTo.toLocaleDateString(),

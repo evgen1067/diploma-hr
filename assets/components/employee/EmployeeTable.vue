@@ -2,7 +2,7 @@
   <hr-modal ref="employeeModal" v-if="form && form.length">
     <template v-if="!cardLoading">
       <va-content class="content">
-        <h4>{{ modalTitle }}</h4>
+        <h4>{{ modalContent.title }}</h4>
       </va-content>
       <va-form ref="form" tag="form" @validation="validation = $event" @submit.prevent="handleSubmit">
         <template v-for="(inpInfo, key) in form" :key="key">
@@ -35,7 +35,7 @@
             color="#4056A1"
           ></va-select>
         </template>
-        <va-button type="submit" class="w-100 mb-3"> Создать </va-button>
+        <va-button type="submit" class="w-100 mb-3"> {{ modalContent.btnContent }} </va-button>
       </va-form>
     </template>
     <hr-spinner v-else />
@@ -76,7 +76,7 @@
           title="Количество записей"
           :hover-out-timeout="30"
           message="Выберите количество записей, показываемых в таблице"
-          placement="bottom-start"
+          placement="right"
           open
         >
           <va-select
@@ -216,7 +216,9 @@
                 v-model="tableFilter.filter[col.key].value"
                 :label="
                   tableFilter.filter[col.key].label
-                    ? tableFilter.filter[col.key].listItems.find(x => x.listValueId === tableFilter.filter[col.key].value).label
+                    ? tableFilter.filter[col.key].listItems.find(
+                        x => x.listValueId === tableFilter.filter[col.key].value,
+                      ).label
                     : 'Выбор'
                 "
                 color="#4056A1"
@@ -265,7 +267,7 @@ import {
 } from 'vuestic-ui';
 import { employeeInfoTable } from './Employee';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { cloneDeep } from "lodash";
+import { cloneDeep } from 'lodash';
 import { EmployeeApi } from '@/api/employee/EmployeeApi';
 import HrSpinner from '@/ui/hrSpinner/HrSpinner';
 import HrModal from '@/ui/hrModal/HrModal';
@@ -310,7 +312,10 @@ export default {
     // форма для вывода инпутов в модальное окно
     form: [],
     // заголовок модального окна (добавление / апдейт)
-    modalTitle: 'Новый сотрудник',
+    modalContent: {
+      title: 'Создание информации о новом сотруднике',
+      btnContent: 'Создать',
+    },
     // валидация
     validation: null,
     // флаг, если true - запрос к добавлению, false - к обновлению
@@ -382,12 +387,10 @@ export default {
       }
     },
     // изменение текущего фильтра
-    changeFilter(columnKey, filter) {
+    async changeFilter(columnKey, filter) {
       this.loading = true;
       this.tableFilter.filter[columnKey] = cloneDeep(filter);
-      this.$nextTick(() => {
-        this.loading = false;
-      });
+      await this.updateTableData();
     },
     // поиск по столбцам
     search() {
@@ -396,7 +399,9 @@ export default {
     // открытие модального окна на добавление сотрудника
     showAddEmployeeModal() {
       this.add = true;
-      this.modalTitle = 'Создание информации о новом сотруднике';
+      this.modalContent.title = 'Создание информации о новом сотруднике';
+      this.modalContent.btnContent = 'Создать';
+
       this.request = cloneDeep(employeeInfoTable.request);
       this.form = cloneDeep(employeeInfoTable.dataInfo);
 
@@ -409,7 +414,8 @@ export default {
       this.loading = true;
       this.add = false;
       // получение информации о сотруднике
-      this.modalTitle = 'Обновление информации о существующем сотруднике';
+      this.modalContent.title = 'Обновление информации о существующем сотруднике';
+      this.modalContent.btnContent = 'Обновить';
       let result = await EmployeeApi.getEmployee(event.item.id);
       this.form = cloneDeep(employeeInfoTable.dataInfo);
 
@@ -459,12 +465,23 @@ export default {
         delete filter[key].iconName;
         delete filter[key].label;
         delete filter[key]?.listItems;
-        if (filter[key]?.value === '' || !filter[key]?.value) {
+        if (filter[key]?.type === 'number_inequality') {
+          if (filter[key]?.valueFrom === '' || !filter[key]?.valueFrom) {
+            delete filter[key]?.valueFrom;
+          }
+          if (filter[key]?.valueTo === '' || !filter[key]?.valueTo) {
+            delete filter[key]?.valueTo;
+          }
+          if (!filter[key]?.valueFrom && !filter[key]?.valueTo) {
+            delete filter[key];
+          }
+        } else if (filter[key]?.value === '' || !filter[key]?.value) {
           delete filter[key];
         } else if (key.includes('date')) {
           filter[key].value = filter[key].value.toLocaleDateString();
         }
       }
+      console.log(filter);
       return filter;
     },
   },

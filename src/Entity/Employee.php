@@ -143,18 +143,6 @@ class Employee
         return $this;
     }
 
-//    public function getWorkExperience(): ?int
-//    {
-//        return $this->workExperience;
-//    }
-//
-//    public function setWorkExperience(int $workExperience): self
-//    {
-//        $this->workExperience = $workExperience;
-//
-//        return $this;
-//    }
-
     public function getDepartment(): ?string
     {
         return $this->department;
@@ -223,6 +211,43 @@ class Employee
     public function setCategoryOfDismissal(?int $categoryOfDismissal): self
     {
         $this->categoryOfDismissal = $categoryOfDismissal;
+
+        return $this;
+    }
+
+    public function fromJson($dataForCreate): Employee
+    {
+        $fullName = $dataForCreate['fullName'];
+        $dateOfEmployment = $dataForCreate['dateOfEmployment'];
+        $department = $dataForCreate['department'];
+        $position = $dataForCreate['position'];
+        $status = $dataForCreate['status'];
+
+        $dateOfDismissal = $dataForCreate['dateOfDismissal'] ?? null;
+        $reasonForDismissal = $dataForCreate['reasonForDismissal'] ?? null;
+        $categoryOfDismissal = $dataForCreate['categoryOfDismissal'] ?? null;
+
+        $this
+            ->setFullName($fullName)
+            ->setDateOfEmployment(\DateTimeImmutable::createFromFormat('Y-m-d', $dateOfEmployment))
+            ->setDepartment($department)
+            ->setPosition($position)
+            ->setStatus($status);
+
+        if (3 === $this->getStatus()) {
+            if ($dateOfDismissal) {
+                $dateOfDismissal = \DateTimeImmutable::createFromFormat('Y-m-d', $dateOfDismissal);
+                $this->setDateOfDismissal($dateOfDismissal);
+            }
+
+            if ($reasonForDismissal) {
+                $this->setReasonForDismissal($reasonForDismissal);
+            }
+
+            if ($categoryOfDismissal) {
+                $this->setCategoryOfDismissal($categoryOfDismissal);
+            }
+        }
 
         return $this;
     }

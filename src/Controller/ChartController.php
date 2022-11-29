@@ -3,6 +3,8 @@
 namespace App\Controller;
 
 use App\Repository\EmployeeRepository;
+use App\Repository\LayoffsRepository;
+use App\Repository\TurnoverRepository;
 use JMS\Serializer\Serializer;
 use JMS\Serializer\SerializerBuilder;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -24,7 +26,7 @@ class ChartController extends AbstractController
     #[Route('/chart-turnover', name: 'app_turnover_chart', methods: ['GET'])]
     public function turnover(
         Request $request,
-        EmployeeRepository $employeeRepository
+        TurnoverRepository $turnoverRepository
     ): JsonResponse {
         $valueTo = $request->query->get('valueTo');
         if ($valueTo) {
@@ -38,7 +40,7 @@ class ChartController extends AbstractController
 
         $department = $request->query->get('department');
 
-        $result = $employeeRepository->findDataForTurnoverRates($valueTo, $valueFrom, $department);
+        $result = $turnoverRepository->findDataForTurnoverRates($valueTo, $valueFrom, $department);
         $response = new JsonResponse();
         $response->setStatusCode(Response::HTTP_OK);
         $response->setContent($this->serializer->serialize($result, 'json'));
@@ -49,7 +51,7 @@ class ChartController extends AbstractController
     #[Route('/chart-layoffs', name: 'app_layoffs_chart', methods: ['GET'])]
     public function chart(
         Request $request,
-        EmployeeRepository $employeeRepository
+        LayoffsRepository $layoffsRepository
     ): JsonResponse {
         $valueTo = $request->query->get('valueTo');
         if ($valueTo) {
@@ -64,7 +66,7 @@ class ChartController extends AbstractController
             $valueFrom = new \DateTimeImmutable('-3 year');
         }
 
-        $result = $employeeRepository->findDataLayoffsChart($valueTo, $valueFrom);
+        $result = $layoffsRepository->findDataLayoffsChart($valueTo, $valueFrom);
         $response = new JsonResponse();
         $response->setStatusCode(Response::HTTP_OK);
         $response->setContent($this->serializer->serialize($result, 'json'));

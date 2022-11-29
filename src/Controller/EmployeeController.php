@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Employee;
 use App\Repository\EmployeeRepository;
+use App\Repository\TableRepository;
 use JMS\Serializer\Serializer;
 use JMS\Serializer\SerializerBuilder;
 use Knp\Component\Pager\PaginatorInterface;
@@ -29,7 +30,7 @@ class EmployeeController extends AbstractController
     #[Route('/employees', name: 'app_employees', methods: ['GET'])]
     public function employees(
         Request $request,
-        EmployeeRepository $employeeRepository,
+        TableRepository $tableRepository,
         PaginatorInterface $paginator
     ): JsonResponse {
         // номер страницы
@@ -39,9 +40,14 @@ class EmployeeController extends AbstractController
         $perPage = $request->query->get('perPage') ?: 10;
 
         // фильтр
-        $filter = $request->query->get('filter') ? json_decode($request->query->get('filter'), true, 512, JSON_THROW_ON_ERROR) : null;
+        $filter = $request->query->get('filter') ? json_decode(
+            $request->query->get('filter'),
+            true,
+            512,
+            JSON_THROW_ON_ERROR
+        ) : null;
         // записи до пагинации
-        $tableData = $employeeRepository->getTableData($filter);
+        $tableData = $tableRepository->getTableData($filter);
 
         if ('Все' !== $perPage) {
             // пагинация
@@ -76,9 +82,9 @@ class EmployeeController extends AbstractController
     #[Route('/employees/{id}', name: 'app_employee', methods: ['GET'])]
     public function employee(
         int $id,
-        EmployeeRepository $employeeRepository
+        TableRepository $tableRepository
     ): JsonResponse {
-        $employee = $employeeRepository->findEmployeeInArray($id);
+        $employee = $tableRepository->findEmployeeInArray($id);
 
         $response = new JsonResponse();
 
@@ -107,24 +113,13 @@ class EmployeeController extends AbstractController
         Request $request,
         EmployeeRepository $employeeRepository
     ): JsonResponse {
-        $dataForCreate = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        $employee = new Employee();
+        $employee->fromJson($data);
 
         $response = new JsonResponse();
 
-        $content = [];
-
-        $fullName = $dataForCreate['fullName'];
-        $dateOfEmployment = $dataForCreate['dateOfEmployment'];
-        $department = $dataForCreate['department'];
-        $position = $dataForCreate['position'];
-        $status = $dataForCreate['status'];
-
-        $dateOfDismissal = $dataForCreate['dateOfDismissal'];
-        $reasonForDismissal = $dataForCreate['reasonForDismissal'];
-        $categoryOfDismissal = $dataForCreate['categoryOfDismissal'];
-
-        $content = $this->validEmployee($fullName, $dateOfEmployment, $department, $position, $status);
-
+        $content = $this->validate($employee);
         if (count($content) > 0) {
             $response->setStatusCode(Response::HTTP_BAD_REQUEST);
             $response->setContent($this->serializer->serialize(
@@ -134,35 +129,9 @@ class EmployeeController extends AbstractController
 
             return $response;
         }
-
-        $employee = new Employee();
-        $employee
-            ->setFullName($fullName)
-            ->setDateOfEmployment(\DateTimeImmutable::createFromFormat('Y-m-d', $dateOfEmployment))
-            ->setDepartment($department)
-            ->setPosition($position)
-            ->setStatus($status);
-
-        if ('уволен' === $employee->getStatus()) {
-            if ($dateOfDismissal) {
-                $dateOfDismissal = \DateTimeImmutable::createFromFormat('Y-m-d', $dateOfDismissal);
-                $employee->setDateOfDismissal($dateOfDismissal);
-            }
-
-            if ($reasonForDismissal) {
-                $employee->setReasonForDismissal($reasonForDismissal);
-            }
-
-            if ($categoryOfDismissal) {
-                $employee->setCategoryOfDismissal($categoryOfDismissal);
-            }
-        }
-
         $employeeRepository->save($employee, true);
-
         $response->setStatusCode(Response::HTTP_CREATED);
         $response->setContent($this->serializer->serialize(['message' => 'Сотрудник успешно создан'], 'json'));
-
         return $response;
     }
 
@@ -175,36 +144,9 @@ class EmployeeController extends AbstractController
         Request $request,
         EmployeeRepository $employeeRepository
     ): JsonResponse {
-        $dataForCreate = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
-
         $response = new JsonResponse();
 
-        $content = [];
-
-        $fullName = $dataForCreate['fullName'];
-        $dateOfEmployment = $dataForCreate['dateOfEmployment'];
-        $department = $dataForCreate['department'];
-        $position = $dataForCreate['position'];
-        $status = $dataForCreate['status'];
-
-        $dateOfDismissal = $dataForCreate['dateOfDismissal'] ?? null;
-        $reasonForDismissal = $dataForCreate['reasonForDismissal'] ?? null;
-        $categoryOfDismissal = $dataForCreate['categoryOfDismissal'] ?? null;
-
-        $content = $this->validEmployee($fullName, $dateOfEmployment, $department, $position, $status);
-
-        if (count($content) > 0) {
-            $response->setStatusCode(Response::HTTP_BAD_REQUEST);
-            $response->setContent($this->serializer->serialize(
-                $content,
-                'json'
-            ));
-
-            return $response;
-        }
-
         $employee = $employeeRepository->find($id);
-
         if (!$employee) {
             $response->setStatusCode(Response::HTTP_NOT_FOUND);
             $content = $this->serializer->serialize([
@@ -215,33 +157,21 @@ class EmployeeController extends AbstractController
             return $response;
         }
 
-        $employee
-            ->setFullName($fullName)
-            ->setDateOfEmployment(\DateTimeImmutable::createFromFormat('d.m.Y', $dateOfEmployment))
-            ->setDepartment($department)
-            ->setPosition($position)
-            ->setStatus($status);
+        $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        $employee->fromJson($data);
+        $content = $this->validate($employee);
+        if (count($content) > 0) {
+            $response->setStatusCode(Response::HTTP_BAD_REQUEST);
+            $response->setContent($this->serializer->serialize(
+                $content,
+                'json'
+            ));
 
-        if ('уволен' === $employee->getStatus()) {
-            if ($dateOfDismissal) {
-                $dateOfDismissal = \DateTimeImmutable::createFromFormat('Y-m-d', $dateOfDismissal);
-                $employee->setDateOfDismissal($dateOfDismissal);
-            }
-
-            if ($reasonForDismissal) {
-                $employee->setReasonForDismissal($reasonForDismissal);
-            }
-
-            if ($categoryOfDismissal) {
-                $employee->setCategoryOfDismissal($categoryOfDismissal);
-            }
+            return $response;
         }
-
         $employeeRepository->save($employee, true);
-
         $response->setStatusCode(Response::HTTP_OK);
         $response->setContent($this->serializer->serialize(['message' => 'Сотрудник успешно изменен'], 'json'));
-
         return $response;
     }
 
@@ -269,27 +199,27 @@ class EmployeeController extends AbstractController
         return $response;
     }
 
-    private function validEmployee($fullName, $dateOfEmployment, $department, $position, $status): array
+    private function validate(Employee $employee): array
     {
         $content = [];
 
-        if (!$fullName) {
+        if (!$employee->getFullName()) {
             $content[] = ['message' => 'Не указано ФИО'];
         }
 
-        if (!$dateOfEmployment) {
+        if (!$employee->getDateOfEmployment()) {
             $content[] = ['message' => 'Не указана дата трудоустройства'];
         }
 
-        if (!$department) {
+        if (!$employee->getDepartment()) {
             $content[] = ['message' => 'Не указан отдел'];
         }
 
-        if (!$position) {
+        if (!$employee->getPosition()) {
             $content[] = ['message' => 'Не указана должность'];
         }
 
-        if (!$status) {
+        if (!$employee->getStatus()) {
             $content[] = ['message' => 'Не указан статус'];
         }
 
