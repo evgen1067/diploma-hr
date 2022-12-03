@@ -103,8 +103,11 @@
       selected-color="#4056A1"
       sticky-header
       virtual-scroller
+      v-model:sort-by="tableFilter.sort.key"
+      v-model:sorting-order="tableFilter.sort.value"
       @selectionChange="table.selectedItems = $event.currentSelectedItems"
       @row:dblclick="handleDblClick"
+      @sorted="sortDataTable"
     >
       <template #headerAppend>
         <tr>
@@ -302,6 +305,10 @@ export default {
     // объект фильтра
     tableFilter: {
       filter: {},
+      sort: {
+        key: 'fullName',
+        value: null,
+      },
     },
     // объект таблицы
     table: null,
@@ -354,11 +361,17 @@ export default {
         position: 'bottom-right',
       });
     },
+    async sortDataTable(e) {
+      this.tableFilter.key = e.sortBy;
+      this.tableFilter.value = e.sortingOrder;
+      await this.updateTableData();
+    },
     // обновление информации по таблице
     async updateTableData() {
       this.loading = true;
       this.table = await EmployeeApi.getEmployees({
         filter: JSON.stringify(this.clearFilter()),
+        sort: this.tableFilter.sort.value ? JSON.stringify(this.tableFilter.sort) : null,
         page: this.tablePaginator.page,
         perPage: this.tablePaginator.perPage,
       });
@@ -481,7 +494,7 @@ export default {
           filter[key].value = filter[key].value.toLocaleDateString();
         }
       }
-      console.log(filter);
+
       return filter;
     },
   },

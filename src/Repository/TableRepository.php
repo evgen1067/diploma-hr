@@ -10,7 +10,7 @@ class TableRepository extends EmployeeRepository
      * @return array
      *               Получение таблицы сотрудников
      */
-    public function getTableData(array|null $filter): array
+    public function getTableData(array|null $filter, array|null $sort): array
     {
         $query = $this->createQueryBuilder('e');
 
@@ -20,7 +20,9 @@ class TableRepository extends EmployeeRepository
             $query = $this->buildQuery($query, $filter);
         }
 
-        $query->orderBy('e.dateOfEmployment');
+        if ($sort) {
+            $query->orderBy('e.'.$sort['key'], $sort['value']);
+        }
 
         /**
          * @var array $table

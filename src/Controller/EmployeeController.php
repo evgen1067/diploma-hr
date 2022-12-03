@@ -46,8 +46,16 @@ class EmployeeController extends AbstractController
             512,
             JSON_THROW_ON_ERROR
         ) : null;
+
+        $sort = $request->query->get('sort') ? json_decode(
+            $request->query->get('sort'),
+            true,
+            512,
+            JSON_THROW_ON_ERROR
+        ) : null;
+
         // записи до пагинации
-        $tableData = $tableRepository->getTableData($filter);
+        $tableData = $tableRepository->getTableData($filter, $sort);
 
         if ('Все' !== $perPage) {
             // пагинация
@@ -132,6 +140,7 @@ class EmployeeController extends AbstractController
         $employeeRepository->save($employee, true);
         $response->setStatusCode(Response::HTTP_CREATED);
         $response->setContent($this->serializer->serialize(['message' => 'Сотрудник успешно создан'], 'json'));
+
         return $response;
     }
 
@@ -172,6 +181,7 @@ class EmployeeController extends AbstractController
         $employeeRepository->save($employee, true);
         $response->setStatusCode(Response::HTTP_OK);
         $response->setContent($this->serializer->serialize(['message' => 'Сотрудник успешно изменен'], 'json'));
+
         return $response;
     }
 
