@@ -35,6 +35,9 @@ import {
   faFont,
   faCalendarDay,
   faHouse,
+  faSort,
+  faSortAsc,
+  faSortDesc,
 } from '@fortawesome/free-solid-svg-icons';
 
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
@@ -49,6 +52,9 @@ library.add(
   faFont,
   faCalendarDay,
   faHouse,
+  faSort,
+  faSortAsc,
+  faSortDesc,
 );
 
 import {

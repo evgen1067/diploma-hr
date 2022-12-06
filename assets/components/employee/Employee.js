@@ -231,7 +231,7 @@ for (let i = 0; i < employeeData.length; i++) {
   emptyEmployeeRequest[employeeData[i].key] = '';
   columns.push({
     key: employeeData[i].key,
-    sortable: true,
+    label: employeeData[i].label,
     datatype: employeeData[i].datatype,
     tdAlign: 'center',
     thAlign: 'center',

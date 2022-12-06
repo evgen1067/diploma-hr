@@ -20,7 +20,7 @@ class TableRepository extends EmployeeRepository
             $query = $this->buildQuery($query, $filter);
         }
 
-        if ($sort) {
+        if ($sort && 'workExperience' !== $sort['key']) {
             $query->orderBy('e.'.$sort['key'], $sort['value']);
         }
 
@@ -98,11 +98,34 @@ class TableRepository extends EmployeeRepository
                 }
             }
         }
+        $sortedArray = [];
         if ($numberFilter) {
-            return $resultSet;
+            $sortedArray = $resultSet;
+        } else {
+            $sortedArray = $table;
         }
 
-        return $table;
+        if ($sort && 'workExperience' === $sort['key']) {
+            if ('desc' === $sort['value']) {
+                usort($sortedArray, static function ($a, $b) {
+                    if ($a['workExperience'] === $b['workExperience']) {
+                        return 0;
+                    }
+
+                    return ($a['workExperience'] > $b['workExperience']) ? 1 : -1;
+                });
+            } else {
+                usort($sortedArray, static function ($a, $b) {
+                    if ($a['workExperience'] === $b['workExperience']) {
+                        return 0;
+                    }
+
+                    return ($a['workExperience'] < $b['workExperience']) ? 1 : -1;
+                });
+            }
+        }
+
+        return $sortedArray;
     }
 
     /**

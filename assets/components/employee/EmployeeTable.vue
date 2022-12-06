@@ -103,11 +103,8 @@
       selected-color="#4056A1"
       sticky-header
       virtual-scroller
-      v-model:sort-by="tableFilter.sort.key"
-      v-model:sorting-order="tableFilter.sort.value"
       @selectionChange="table.selectedItems = $event.currentSelectedItems"
       @row:dblclick="handleDblClick"
-      @sorted="sortDataTable"
     >
       <template #headerAppend>
         <tr>
@@ -143,6 +140,31 @@
                       </li>
                     </ul>
                   </template>
+                  <template #append>
+                    <font-awesome-icon
+                      v-if="
+                        tableFilter.sort.key !== col.key ||
+                        (tableFilter.sort.key === col.key && tableFilter.sort.value === null)
+                      "
+                      @click="sortChange(col.key, 'asc')"
+                      class="pl-2 pr-2 cursor-pointer"
+                      icon="sort"
+                    />
+                    <template v-else>
+                      <font-awesome-icon
+                        v-if="tableFilter.sort.key === col.key && tableFilter.sort.value === 'asc'"
+                        @click="sortChange(col.key, 'desc')"
+                        class="pl-2 pr-2 cursor-pointer"
+                        icon="sort-asc"
+                      />
+                      <font-awesome-icon
+                        v-else
+                        @click="sortChange(col.key, null)"
+                        class="pl-2 pr-2 cursor-pointer"
+                        icon="sort-desc"
+                      />
+                    </template>
+                  </template>
                 </va-input>
                 <va-date-input
                   v-else
@@ -173,6 +195,31 @@
                         </a>
                       </li>
                     </ul>
+                  </template>
+                  <template #append>
+                    <font-awesome-icon
+                        v-if="
+                        tableFilter.sort.key !== col.key ||
+                        (tableFilter.sort.key === col.key && tableFilter.sort.value === null)
+                      "
+                        @click="sortChange(col.key, 'asc')"
+                        class="pl-2 pr-2 cursor-pointer"
+                        icon="sort"
+                    />
+                    <template v-else>
+                      <font-awesome-icon
+                          v-if="tableFilter.sort.key === col.key && tableFilter.sort.value === 'asc'"
+                          @click="sortChange(col.key, 'desc')"
+                          class="pl-2 pr-2 cursor-pointer"
+                          icon="sort-asc"
+                      />
+                      <font-awesome-icon
+                          v-else
+                          @click="sortChange(col.key, null)"
+                          class="pl-2 pr-2 cursor-pointer"
+                          icon="sort-desc"
+                      />
+                    </template>
                   </template>
                 </va-date-input>
               </template>
@@ -211,6 +258,31 @@
                   @clear="search"
                   clearable
                 >
+                  <template #append>
+                    <font-awesome-icon
+                        v-if="
+                        tableFilter.sort.key !== col.key ||
+                        (tableFilter.sort.key === col.key && tableFilter.sort.value === null)
+                      "
+                        @click="sortChange(col.key, 'asc')"
+                        class="pl-2 pr-2 cursor-pointer"
+                        icon="sort"
+                    />
+                    <template v-else>
+                      <font-awesome-icon
+                          v-if="tableFilter.sort.key === col.key && tableFilter.sort.value === 'asc'"
+                          @click="sortChange(col.key, 'desc')"
+                          class="pl-2 pr-2 cursor-pointer"
+                          icon="sort-asc"
+                      />
+                      <font-awesome-icon
+                          v-else
+                          @click="sortChange(col.key, null)"
+                          class="pl-2 pr-2 cursor-pointer"
+                          icon="sort-desc"
+                      />
+                    </template>
+                  </template>
                 </va-input>
               </div>
             </template>
@@ -231,7 +303,33 @@
                 value-by="listValueId"
                 @update:model-value="search"
                 clearable
-              ></va-select>
+              >
+                <template #append>
+                  <font-awesome-icon
+                      v-if="
+                        tableFilter.sort.key !== col.key ||
+                        (tableFilter.sort.key === col.key && tableFilter.sort.value === null)
+                      "
+                      @click="sortChange(col.key, 'asc')"
+                      class="pl-2 pr-2 cursor-pointer"
+                      icon="sort"
+                  />
+                  <template v-else>
+                    <font-awesome-icon
+                        v-if="tableFilter.sort.key === col.key && tableFilter.sort.value === 'asc'"
+                        @click="sortChange(col.key, 'desc')"
+                        class="pl-2 pr-2 cursor-pointer"
+                        icon="sort-asc"
+                    />
+                    <font-awesome-icon
+                        v-else
+                        @click="sortChange(col.key, null)"
+                        class="pl-2 pr-2 cursor-pointer"
+                        icon="sort-desc"
+                    />
+                  </template>
+                </template>
+              </va-select>
             </template>
           </td>
         </tr>
@@ -360,11 +458,6 @@ export default {
         color: color,
         position: 'bottom-right',
       });
-    },
-    async sortDataTable(e) {
-      this.tableFilter.key = e.sortBy;
-      this.tableFilter.value = e.sortingOrder;
-      await this.updateTableData();
     },
     // обновление информации по таблице
     async updateTableData() {
@@ -496,6 +589,11 @@ export default {
       }
 
       return filter;
+    },
+    async sortChange(key, value) {
+      this.tableFilter.sort.key = key;
+      this.tableFilter.sort.value = value;
+      await this.updateTableData();
     },
   },
   computed: {
