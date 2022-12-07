@@ -1,7 +1,6 @@
 COMPOSE=docker compose
-PHP=$(COMPOSE) exec php
-CONSOLE=$(PHP) bin/console
-COMPOSER=$(PHP) composer
+PHP=docker exec -it diploma-hr-php
+CONSOLE=$(PHP) php bin/console
 
 up:
 	@${COMPOSE} up -d
@@ -18,23 +17,11 @@ entity:
 controller:
 	@${CONSOLE} make:controller
 
-require:
-	@${COMPOSER} require $2
-
-npm:
-	@${COMPOSE} run node npm install
+install:
+	@${PHP} npm install && ${PHP} composer install
 
 watch:
-	@${COMPOSE} run node npm run watch
-
-encore_dev:
-	@${COMPOSE} run node yarn encore dev --watch
-
-encore_prod:
-	@${COMPOSE} run node yarn encore production
-
-phpunit:
-	@${PHP} bin/phpunit --testdox
+	@${PHP} npm run watch
 
 fix_src:
 	vendor/friendsofphp/php-cs-fixer/php-cs-fixer fix src
