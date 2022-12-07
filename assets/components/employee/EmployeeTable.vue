@@ -110,227 +110,14 @@
         <tr>
           <td> </td>
           <td v-for="(col, key) in table.columns" :key="key">
-            <template v-if="col.datatype !== 'list' && col.datatype !== 'no'">
-              <template v-if="tableFilter.filter[col.key].type !== 'number_inequality'">
-                <va-input
-                  v-model="tableFilter.filter[col.key].value"
-                  :label="tableFilter.filter[col.key].label"
-                  class="w-100"
-                  @change="search"
-                  v-if="col.datatype !== 'date'"
-                  clearable
-                  @clear="search"
-                >
-                  <template #prependInner>
-                    <font-awesome-icon :icon="tableFilter.filter[col.key].iconName" />
-                  </template>
-                  <template #prepend>
-                    <va-icon
-                      :id="`${col.key}--dropdown`"
-                      class="cursor-pointer ml-1 mr-1"
-                      data-bs-toggle="dropdown"
-                      name="filter_list"
-                    />
-                    <ul class="dropdown-menu" :aria-labelledby="`${col.key}--dropdown`">
-                      <li v-for="(fil, filKey) in filtersList[col.datatype]" :key="filKey">
-                        <a class="dropdown-item cursor-pointer" @click="changeFilter(col.key, fil)">
-                          <font-awesome-icon :icon="fil.iconName" />
-                          {{ fil.label }}
-                        </a>
-                      </li>
-                    </ul>
-                  </template>
-                  <template #append>
-                    <font-awesome-icon
-                      v-if="
-                        tableFilter.sort.key !== col.key ||
-                        (tableFilter.sort.key === col.key && tableFilter.sort.value === null)
-                      "
-                      @click="sortChange(col.key, 'asc')"
-                      class="pl-2 pr-2 cursor-pointer"
-                      icon="sort"
-                    />
-                    <template v-else>
-                      <font-awesome-icon
-                        v-if="tableFilter.sort.key === col.key && tableFilter.sort.value === 'asc'"
-                        @click="sortChange(col.key, 'desc')"
-                        class="pl-2 pr-2 cursor-pointer"
-                        icon="sort-asc"
-                      />
-                      <font-awesome-icon
-                        v-else
-                        @click="sortChange(col.key, null)"
-                        class="pl-2 pr-2 cursor-pointer"
-                        icon="sort-desc"
-                      />
-                    </template>
-                  </template>
-                </va-input>
-                <va-date-input
-                  v-else
-                  v-model="tableFilter.filter[col.key].value"
-                  :label="tableFilter.filter[col.key].label"
-                  class="w-100"
-                  manual-input
-                  clearable
-                  @update:model-value="search"
-                  @clear="search"
-                  :reset-on-close="false"
-                >
-                  <template #prependInner>
-                    <font-awesome-icon :icon="tableFilter.filter[col.key].iconName" />
-                  </template>
-                  <template #prepend>
-                    <va-icon
-                      :id="`${col.key}--dropdown`"
-                      class="cursor-pointer ml-1 mr-1"
-                      data-bs-toggle="dropdown"
-                      name="filter_list"
-                    />
-                    <ul class="dropdown-menu" :aria-labelledby="`${col.key}--dropdown`">
-                      <li v-for="(fil, filKey) in filtersList[col.datatype]" :key="filKey">
-                        <a class="dropdown-item cursor-pointer" @click="changeFilter(col.key, fil)">
-                          <font-awesome-icon :icon="fil.iconName" />
-                          {{ fil.label }}
-                        </a>
-                      </li>
-                    </ul>
-                  </template>
-                  <template #append>
-                    <font-awesome-icon
-                        v-if="
-                        tableFilter.sort.key !== col.key ||
-                        (tableFilter.sort.key === col.key && tableFilter.sort.value === null)
-                      "
-                        @click="sortChange(col.key, 'asc')"
-                        class="pl-2 pr-2 cursor-pointer"
-                        icon="sort"
-                    />
-                    <template v-else>
-                      <font-awesome-icon
-                          v-if="tableFilter.sort.key === col.key && tableFilter.sort.value === 'asc'"
-                          @click="sortChange(col.key, 'desc')"
-                          class="pl-2 pr-2 cursor-pointer"
-                          icon="sort-asc"
-                      />
-                      <font-awesome-icon
-                          v-else
-                          @click="sortChange(col.key, null)"
-                          class="pl-2 pr-2 cursor-pointer"
-                          icon="sort-desc"
-                      />
-                    </template>
-                  </template>
-                </va-date-input>
-              </template>
-              <div class="d-flex align-items-center" v-else>
-                <va-input
-                  v-model="tableFilter.filter[col.key].valueFrom"
-                  label="От"
-                  class="number_inequality mr-2"
-                  @change="search"
-                  @clear="search"
-                  clearable
-                >
-                  <template #prepend>
-                    <va-icon
-                      :id="`${col.key}--dropdown`"
-                      class="cursor-pointer ml-1 mr-1"
-                      data-bs-toggle="dropdown"
-                      name="filter_list"
-                    />
-                    <ul class="dropdown-menu" :aria-labelledby="`${col.key}--dropdown`">
-                      <li v-for="(fil, filKey) in filtersList[col.datatype]" :key="filKey">
-                        <a class="dropdown-item cursor-pointer" @click="changeFilter(col.key, fil)">
-                          <font-awesome-icon :icon="fil.iconName" />
-                          {{ fil.label }}
-                        </a>
-                      </li>
-                    </ul>
-                  </template>
-                </va-input>
-                <font-awesome-icon :icon="tableFilter.filter[col.key].iconName" />
-                <va-input
-                  v-model="tableFilter.filter[col.key].valueTo"
-                  label="До"
-                  class="number_inequality ml-2"
-                  @change="search"
-                  @clear="search"
-                  clearable
-                >
-                  <template #append>
-                    <font-awesome-icon
-                        v-if="
-                        tableFilter.sort.key !== col.key ||
-                        (tableFilter.sort.key === col.key && tableFilter.sort.value === null)
-                      "
-                        @click="sortChange(col.key, 'asc')"
-                        class="pl-2 pr-2 cursor-pointer"
-                        icon="sort"
-                    />
-                    <template v-else>
-                      <font-awesome-icon
-                          v-if="tableFilter.sort.key === col.key && tableFilter.sort.value === 'asc'"
-                          @click="sortChange(col.key, 'desc')"
-                          class="pl-2 pr-2 cursor-pointer"
-                          icon="sort-asc"
-                      />
-                      <font-awesome-icon
-                          v-else
-                          @click="sortChange(col.key, null)"
-                          class="pl-2 pr-2 cursor-pointer"
-                          icon="sort-desc"
-                      />
-                    </template>
-                  </template>
-                </va-input>
-              </div>
-            </template>
-            <template v-else-if="col.datatype === 'list'">
-              <va-select
-                v-model="tableFilter.filter[col.key].value"
-                :label="
-                  tableFilter.filter[col.key].label
-                    ? tableFilter.filter[col.key].listItems.find(
-                        x => x.listValueId === tableFilter.filter[col.key].value,
-                      ).label
-                    : 'Выбор'
-                "
-                color="#4056A1"
-                class="w-100"
-                :options="tableFilter.filter[col.key].listItems"
-                text-by="label"
-                value-by="listValueId"
-                @update:model-value="search"
-                clearable
-              >
-                <template #append>
-                  <font-awesome-icon
-                      v-if="
-                        tableFilter.sort.key !== col.key ||
-                        (tableFilter.sort.key === col.key && tableFilter.sort.value === null)
-                      "
-                      @click="sortChange(col.key, 'asc')"
-                      class="pl-2 pr-2 cursor-pointer"
-                      icon="sort"
-                  />
-                  <template v-else>
-                    <font-awesome-icon
-                        v-if="tableFilter.sort.key === col.key && tableFilter.sort.value === 'asc'"
-                        @click="sortChange(col.key, 'desc')"
-                        class="pl-2 pr-2 cursor-pointer"
-                        icon="sort-asc"
-                    />
-                    <font-awesome-icon
-                        v-else
-                        @click="sortChange(col.key, null)"
-                        class="pl-2 pr-2 cursor-pointer"
-                        icon="sort-desc"
-                    />
-                  </template>
-                </template>
-              </va-select>
-            </template>
+            <filter-panel
+              :sort="tableFilter.sort"
+              :column-filter="tableFilter.filter[col.key]"
+              :column="col"
+              @sortChange="sortChange"
+              @search="search"
+              @changeFilter="changeFilter"
+            />
           </td>
         </tr>
       </template>
@@ -367,19 +154,17 @@ import {
   VaSelect,
 } from 'vuestic-ui';
 import { employeeInfoTable } from './Employee';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { cloneDeep } from 'lodash';
 import { EmployeeApi } from '@/api/employee/EmployeeApi';
 import HrSpinner from '@/ui/hrSpinner/HrSpinner';
 import HrModal from '@/ui/hrModal/HrModal';
+import FilterPanel from './components/FilterPanel.vue';
 export default {
   name: 'EmployeeTable',
   components: {
+    FilterPanel,
     VaPopover,
-    VaDateInput,
     VaSelect,
-    VaIcon,
-    FontAwesomeIcon,
     VaPagination,
     VaDataTable,
     HrSpinner,
@@ -493,13 +278,14 @@ export default {
       }
     },
     // изменение текущего фильтра
-    async changeFilter(columnKey, filter) {
+    async changeFilter(e) {
       this.loading = true;
-      this.tableFilter.filter[columnKey] = cloneDeep(filter);
+      this.tableFilter.filter[e.key] = cloneDeep(e.filter);
       await this.updateTableData();
     },
     // поиск по столбцам
-    search() {
+    search(e) {
+      this.tableFilter.filter[e.key] = e.filter;
       this.updateTableData();
     },
     // открытие модального окна на добавление сотрудника
@@ -590,9 +376,9 @@ export default {
 
       return filter;
     },
-    async sortChange(key, value) {
-      this.tableFilter.sort.key = key;
-      this.tableFilter.sort.value = value;
+    async sortChange(e) {
+      this.tableFilter.sort.key = e.key;
+      this.tableFilter.sort.value = e.value;
       await this.updateTableData();
     },
   },
