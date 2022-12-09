@@ -24,6 +24,22 @@ class EmployeeController extends AbstractController
         $this->serializer = SerializerBuilder::create()->build();
     }
 
+    #[Route('/department/names', name: 'app_department_names', methods: ['GET'])]
+    public function departments(
+        EmployeeRepository $employeeRepository
+    ): JsonResponse {
+        $data = $employeeRepository->getDepartmentsNames();
+        // сериализуем ответ
+        $data = $this->serializer->serialize($data, 'json');
+
+        // отдаем ответ
+        $response = new JsonResponse();
+        $response->setStatusCode(Response::HTTP_OK);
+        $response->setContent($data);
+
+        return $response;
+    }
+
     /**
      * @throws \JsonException
      */

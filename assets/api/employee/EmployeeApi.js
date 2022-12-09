@@ -43,4 +43,8 @@ export class EmployeeApi extends Api {
   static async deleteEmployees(data) {
     return this.post(`/api/v1/employees/delete`, data);
   }
+
+  static async getEmployeesDepartments(data) {
+    return this.get(`/api/v1/department/names`, data);
+  }
 }

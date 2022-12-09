@@ -65,8 +65,9 @@ class ChartController extends AbstractController
         } else {
             $valueFrom = new \DateTimeImmutable('-3 year');
         }
+        $department = $request->query->get('department') ?? null;
 
-        $result = $layoffsRepository->findDataLayoffsChart($valueTo, $valueFrom);
+        $result = $layoffsRepository->findDataLayoffsChart($valueTo, $valueFrom, $department);
         $response = new JsonResponse();
         $response->setStatusCode(Response::HTTP_OK);
         $response->setContent($this->serializer->serialize($result, 'json'));

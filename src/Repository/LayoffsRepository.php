@@ -4,22 +4,22 @@ namespace App\Repository;
 
 class LayoffsRepository extends EmployeeRepository
 {
-    public function findDataLayoffsChart(\DateTimeImmutable $valueTo, \DateTimeImmutable $valueFrom): array
+    public function findDataLayoffsChart(\DateTimeImmutable $valueTo, \DateTimeImmutable $valueFrom, string|null $department): array
     {
+        // общее число увольнений
+        $totalDismissed = $this->getTotalDismissedEmployees($valueTo, $valueFrom, $department);
+        // средний стаж работы
+        $avgWorkExp = $this->getAverageWorkExperience($valueTo, $valueFrom, $department);
+        // данные по увольнениям в зависимости от причин
+        $reasonChart = $this->getTotalDismissedByReason($valueTo, $valueFrom, $department);
+        // данные по увольнениям в зависимости от отдела
         $departmentChart = $this->getTotalDismissedByDepartment($valueTo, $valueFrom);
-
+        // данные по увольнениям в зависимости от должности
         $positionChart = $this->getTotalDismissedByPosition($valueTo, $valueFrom);
-
-        $workExpChart = $this->getTotalDismissedByWorkExperience($valueTo, $valueFrom);
-
-        $totalDismissed = $this->getTotalDismissedEmployees($valueTo, $valueFrom);
-
-        $avgWorkExp = $this->getAverageWorkExperience($valueTo, $valueFrom);
-
-        // график уволенных по категориям
-        $categoryChart = $this->getTotalDismissedByCategory($valueTo, $valueFrom);
-
-        $reasonChart = $this->getTotalDismissedByReason($valueTo, $valueFrom);
+        // данные по увольнениям в зависимости от стажа работы
+        $workExpChart = $this->getTotalDismissedByWorkExperience($valueTo, $valueFrom, $department);
+        // данные по увольнениям в зависимости от категории увольнения
+        $categoryChart = $this->getTotalDismissedByCategory($valueTo, $valueFrom, $department);
 
         return [
             'totalDismissed' => $totalDismissed, // кол-во уволенных
@@ -49,24 +49,17 @@ class LayoffsRepository extends EmployeeRepository
             ->groupBy('e.department');
         $result = $query->getQuery()->getArrayResult();
 
-        $labels = [];
-        $datasets = [
-            'label' => 'Количество увольнений',
-            'backgroundColor' => '#2191FB',
-            'borderWidth' => 1,
-            'data' => [],
-        ];
+        $data = [];
 
         foreach ($result as $key => $item) {
-            $labels[] = $item['department'];
-            $datasets['data'][] = $item['count'];
+            $data[] = [
+                'key' => $item['department'],
+                'value' => $item['count'],
+            ];
         }
 
         // график уволенных по отделу
-        return [
-            'labels' => $labels,
-            'datasets' => [$datasets],
-        ];
+        return $data;
     }
 
     /**
@@ -86,32 +79,82 @@ class LayoffsRepository extends EmployeeRepository
             ->groupBy('e.position');
         $result = $query->getQuery()->getArrayResult();
 
-        $labels = [];
-        $datasets = [
-            'label' => 'Количество увольнений',
-            'backgroundColor' => '#8CDEDC',
-            'borderWidth' => 1,
-            'data' => [],
-        ];
+        $data = [];
 
         foreach ($result as $key => $item) {
-            $labels[] = $item['position'];
-            $datasets['data'][] = $item['count'];
+            $data[] = [
+                'key' => $item['position'],
+                'value' => $item['count'],
+            ];
         }
 
         // график уволенных по должностям
-        return [
-            'labels' => $labels,
-            'datasets' => [$datasets],
+        return $data;
+    }
+
+    /**
+     * @return array
+     *               Информация об уволенных по стажу работы
+     */
+    protected function getTotalDismissedByWorkExperience(
+        \DateTimeImmutable $valueTo,
+        \DateTimeImmutable $valueFrom,
+        string|null $department
+    ): array {
+        $query = $this->createQueryBuilder('e');
+        $query
+            ->select('e')
+            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
+            ->setParameter('dateOfDismissal1', $valueFrom)
+            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
+            ->setParameter('dateOfDismissal2', $valueTo);
+
+        if (!is_null($department)) {
+            $query->andWhere('e.department = :depName')
+                ->setParameter('depName', $department);
+        }
+
+        /**
+         * @var array $result
+         */
+        $result = $query->getQuery()->getArrayResult();
+
+        $data = [
+            ['key' => 'Менее 3х месяцев', 'value' => 0],
+            ['key' => 'До 1 года работы', 'value' => 0],
+            ['key' => 'До 3х лет работы', 'value' => 0],
+            ['key' => 'Свыше 3х лет работы', 'value' => 0],
         ];
+
+        foreach ($result as $key => $item) {
+            $workExp = $this->getWorkExperience(
+                $item['dateOfEmployment'],
+                $item['dateOfDismissal'],
+            );
+
+            if ($workExp < 0.25) {
+                ++$data[0]['value'];
+            } elseif ($workExp < 1) {
+                ++$data[1]['value'];
+            } elseif ($workExp < 3) {
+                ++$data[2]['value'];
+            } else {
+                ++$data[3]['value'];
+            }
+        }
+
+        return $data;
     }
 
     /**
      * @return array
      *               Информация об уволенных по категориям
      */
-    private function getTotalDismissedByCategory(\DateTimeImmutable $valueTo, \DateTimeImmutable $valueFrom): array
-    {
+    private function getTotalDismissedByCategory(
+        \DateTimeImmutable $valueTo,
+        \DateTimeImmutable $valueFrom,
+        string|null $department
+    ): array {
         $query = $this->createQueryBuilder('e');
         $query
             ->select('count(e.categoryOfDismissal) as count')
@@ -122,32 +165,31 @@ class LayoffsRepository extends EmployeeRepository
             ->setParameter('dateOfDismissal2', $valueTo)
             ->groupBy('e.categoryOfDismissal');
 
+        if (!is_null($department)) {
+            $query->andWhere('e.department = :depName')
+                ->setParameter('depName', $department);
+        }
+
         $result = $query->getQuery()->getArrayResult();
 
-        $labels = ['Количество увольнений'];
-        $datasets = [];
+        $data = [];
 
         foreach ($result as $key => $item) {
-            $datasets[] = [
-                'label' => self::CATEGORY_TYPE[$item['categoryOfDismissal']],
-                'backgroundColor' => self::COLORS[$key],
-                'borderWidth' => 1,
-                'data' => [$item['count']],
+            $data[] = [
+                'key' => self::CATEGORY_TYPE[$item['categoryOfDismissal']],
+                'value' => $item['count'],
             ];
         }
 
         // график уволенных по категориям
-        return [
-            'labels' => $labels,
-            'datasets' => $datasets,
-        ];
+        return $data;
     }
 
     /**
      * @return array
      *               Информация об уволенных по причинам
      */
-    private function getTotalDismissedByReason(\DateTimeImmutable $valueTo, \DateTimeImmutable $valueFrom): array
+    private function getTotalDismissedByReason(\DateTimeImmutable $valueTo, \DateTimeImmutable $valueFrom, string|null $department): array
     {
         $query = $this->createQueryBuilder('e');
         $query
@@ -159,105 +201,35 @@ class LayoffsRepository extends EmployeeRepository
             ->setParameter('dateOfDismissal2', $valueTo)
             ->groupBy('e.reasonForDismissal');
 
+        if (!is_null($department)) {
+            $query->andWhere('e.department = :depName')
+                ->setParameter('depName', $department);
+        }
+
         $result = $query->getQuery()->getArrayResult();
 
-        $labels = [];
-        $datasets = [
-            'label' => 'Количество увольнений',
-            'backgroundColor' => self::COLORS,
-            'borderWidth' => 1,
-            'data' => [],
-        ];
+        $data = [];
 
         foreach ($result as $key => $item) {
-            $labels[] = self::REASON_TYPES[$item['reasonForDismissal']];
-            $datasets['data'][] = $item['count'];
+            $data[] = [
+                'key' => self::REASON_TYPES[$item['reasonForDismissal']],
+                'value' => $item['count'],
+            ];
         }
 
         // график уволенных по причинам
-        return [
-            'labels' => $labels,
-            'datasets' => [$datasets],
-        ];
-    }
-
-    /**
-     * @return array
-     *               Информация об уволенных по стажу работы
-     */
-    protected function getTotalDismissedByWorkExperience(
-        \DateTimeImmutable $valueTo,
-        \DateTimeImmutable $valueFrom
-    ): array {
-        $query = $this->createQueryBuilder('e');
-        $query
-            ->select('e')
-            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
-            ->setParameter('dateOfDismissal1', $valueFrom)
-            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
-            ->setParameter('dateOfDismissal2', $valueTo);
-        /**
-         * @var array $result
-         */
-        $result = $query->getQuery()->getArrayResult();
-
-        $labels = ['Количество увольнений'];
-        $datasets = [
-            [
-                'label' => 'Менее 3х месяцев',
-                'backgroundColor' => '#329F5B',
-                'borderWidth' => 1,
-                'data' => [0],
-            ],
-            [
-                'label' => 'до 1 года работы',
-                'backgroundColor' => '#8380B6',
-                'borderWidth' => 1,
-                'data' => [0],
-            ],
-            [
-                'label' => 'до 3х лет работы',
-                'backgroundColor' => '#177E89',
-                'borderWidth' => 1,
-                'data' => [0],
-            ],
-            [
-                'label' => 'свыше 3х лет работы',
-                'backgroundColor' => '#F40076',
-                'borderWidth' => 1,
-                'data' => [0],
-            ],
-        ];
-
-        foreach ($result as $key => $item) {
-            $workExp = $this->getWorkExperience(
-                $item['dateOfEmployment'],
-                $item['dateOfDismissal'],
-            );
-
-            if ($workExp < 0.25) {
-                ++$datasets[0]['data'][0];
-            } elseif ($workExp < 1) {
-                ++$datasets[1]['data'][0];
-            } elseif ($workExp < 3) {
-                ++$datasets[2]['data'][0];
-            } else {
-                ++$datasets[3]['data'][0];
-            }
-        }
-
-        return [
-            'labels' => $labels,
-            'datasets' => $datasets,
-        ];
+        return $data;
     }
 
     /**
      * @return float
      *               Средний стаж работы
      */
-    private function getAverageWorkExperience(\DateTimeImmutable $valueTo, \DateTimeImmutable $valueFrom): float
-    {
+    private function getAverageWorkExperience(
+        \DateTimeImmutable $valueTo,
+        \DateTimeImmutable $valueFrom,
+        string|null $department
+    ): float {
         $query = $this->createQueryBuilder('e');
         $query
             ->select('e')
@@ -265,6 +237,12 @@ class LayoffsRepository extends EmployeeRepository
             ->setParameter('dateOfDismissal1', $valueFrom)
             ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
             ->setParameter('dateOfDismissal2', $valueTo);
+
+        if (!is_null($department)) {
+            $query->andWhere('e.department = :depName')
+                ->setParameter('depName', $department);
+        }
+
         /**
          * @var array $result
          */

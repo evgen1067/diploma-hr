@@ -20,6 +20,7 @@
         "eslint": "^8.27.0",
         "lodash": "^4.17.21",
         "lodash.clonedeep": "^4.5.0",
+        "randomcolor": "^0.6.2",
         "sass-loader": "^13.1.0",
         "vue": "^3.2.13",
         "vue-chartjs": "^4.1.2",

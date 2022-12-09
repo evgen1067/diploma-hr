@@ -82,6 +82,16 @@ class EmployeeRepository extends ServiceEntityRepository
         }
     }
 
+    public function getDepartmentsNames(): array
+    {
+        $query = $this->createQueryBuilder('e');
+        $query
+            ->distinct()
+            ->select('e.department');
+
+        return $query->getQuery()->getArrayResult();
+    }
+
     /**
      * @return float
      *               Получение опыта работы
@@ -100,8 +110,11 @@ class EmployeeRepository extends ServiceEntityRepository
      * @return int
      *             Общее количество уволенных
      */
-    protected function getTotalDismissedEmployees(\DateTimeImmutable $valueTo, \DateTimeImmutable $valueFrom): int
-    {
+    protected function getTotalDismissedEmployees(
+        \DateTimeImmutable $valueTo,
+        \DateTimeImmutable $valueFrom,
+        string|null $department
+    ): int {
         $query = $this->createQueryBuilder('e');
         $query
             ->select('e')
@@ -109,6 +122,12 @@ class EmployeeRepository extends ServiceEntityRepository
             ->setParameter('dateOfDismissal1', $valueFrom)
             ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
             ->setParameter('dateOfDismissal2', $valueTo);
+
+        if (!is_null($department)) {
+            $query->andWhere('e.department = :depName')
+                ->setParameter('depName', $department);
+        }
+
         /**
          * @var array $result
          */
@@ -117,5 +136,4 @@ class EmployeeRepository extends ServiceEntityRepository
         // всего уволено
         return count($result);
     }
-
 }
