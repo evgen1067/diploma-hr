@@ -104,14 +104,14 @@
           <div class="col-6">
             <va-card>
               <va-card-content>
-                <hr-chart :data="workExpChart" type="horizontal-bar" />
+                <hr-chart :data="workExpChart" type="bar" />
               </va-card-content>
             </va-card>
           </div>
           <div class="col-6">
             <va-card>
               <va-card-content>
-                <hr-chart :data="categoryChart" type="horizontal-bar" />
+                <hr-chart :data="categoryChart" type="bar" />
               </va-card-content>
             </va-card>
           </div>
@@ -146,8 +146,8 @@ import { ChartApi } from '@/api/chart/ChartApi';
 import { cloneDeep } from 'lodash';
 import HrSpinner from '@/ui/hrSpinner/HrSpinner';
 import HrChart from '@/ui/hrChart/HrChart';
-import HrCard from '../../../ui/hrCard/HrCard';
-import { EmployeeApi } from '../../../api/employee/EmployeeApi';
+import HrCard from '@/ui/hrCard/HrCard';
+import { EmployeeApi } from '@/api/employee/EmployeeApi';
 import randomColor from 'randomcolor';
 
 export default {
@@ -238,7 +238,7 @@ export default {
         hue: 'random',
       });
     },
-    getLayoffsChart(label, data) {
+    getLayoffsChart(data, label = 'Количество увольнений') {
       let chartInfo = {
         labels: [],
         datasets: [
@@ -260,46 +260,40 @@ export default {
   computed: {
     reasonChart() {
       if (this.layoffsInfo?.reasonChart) {
-        return this.getLayoffsChart('Количество увольнений', this.layoffsInfo.reasonChart);
+        return this.getLayoffsChart(this.layoffsInfo.reasonChart);
       } else return null;
     },
     departmentChart() {
       if (this.layoffsInfo?.departmentChart) {
-        return this.getLayoffsChart('Количество увольнений', this.layoffsInfo.departmentChart);
+        return this.getLayoffsChart(this.layoffsInfo.departmentChart);
       } else return null;
     },
     positionChart() {
       if (this.layoffsInfo?.positionChart) {
-        return this.getLayoffsChart('Количество увольнений', this.layoffsInfo.positionChart);
+        return this.getLayoffsChart(this.layoffsInfo.positionChart);
       } else return null;
     },
     workExpChart() {
       if (this.layoffsInfo?.workExpChart) {
-        return this.getLayoffsChart('Количество увольнений', this.layoffsInfo.workExpChart);
+        return this.getLayoffsChart(this.layoffsInfo.workExpChart);
       } else return null;
     },
     categoryChart() {
       if (this.layoffsInfo?.categoryChart) {
-        return this.getLayoffsChart('Количество увольнений', this.layoffsInfo.categoryChart);
+        return this.getLayoffsChart(this.layoffsInfo.categoryChart);
       } else return null;
-    }
+    },
   },
 };
 </script>
 
-<style scoped>
-.filter-container {
-  margin-top: 20px;
-}
-
-.hr-chart {
-  height: 340px;
-}
-
+<style lang="scss" scoped>
 p {
   margin-bottom: 0;
 }
-.va-card__content {
-  padding: 0.8rem;
+.va-card {
+  &__content {
+    padding: 0.8rem;
+  }
 }
 </style>

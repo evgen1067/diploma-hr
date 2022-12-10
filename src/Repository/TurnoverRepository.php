@@ -4,41 +4,42 @@ namespace App\Repository;
 
 class TurnoverRepository extends LayoffsRepository
 {
-    public function findDataForTurnoverRates(\DateTimeImmutable $valueTo, \DateTimeImmutable $valueFrom): array
+    public function findDataForTurnoverRates(\DateTimeImmutable $valueTo, \DateTimeImmutable $valueFrom, string|null $department): array
     {
-        // количество сотрудников
-        $numberOfEmployees = $this->getTotalNumberOfEmployees($valueTo);
+        // число сотрудников на конец временного периода
+        $numberOfEmployees = $this->getTotalNumberOfEmployees($valueTo, $department);
 
-        // декрет
-        $numberOfDecreeEmployees = $this->getTotalNumberOfDecreeEmployees();
+        // число принятых сотрудников на временной период
+        $numberOfAcceptedEmployees = $this->getTotalNumberOfAcceptedEmployees($valueTo, $valueFrom, $department);
 
-        // принято
-        $numberOfAcceptedEmployees = $this->getTotalNumberOfAcceptedEmployees($valueTo, $valueFrom);
+        // число уволенных сотрудников на временной период
+        $numberOfDismissedEmployees = $this->getTotalDismissedEmployees($valueTo, $valueFrom, $department);
 
-        // уволено
-        $numberOfDismissedEmployees = $this->getTotalDismissedEmployees($valueTo, $valueFrom);
+        // число сотрудников в декрете на временной период
+        $numberOfDecreeEmployees = $this->getTotalNumberOfDecreeEmployees($department);
 
-        $constNumberOfEmployees = $numberOfEmployees - $numberOfDecreeEmployees;
+        // постоянная разница в количестве сотрудников
+        $permanentDifferenceOfEmployees = $numberOfEmployees - $numberOfDecreeEmployees;
 
-        $result = $this->getNumberOfAverageEmployees($valueTo, $valueFrom, $constNumberOfEmployees);
+        $result = $this->getNumberOfAverageEmployees($valueTo, $valueFrom, $permanentDifferenceOfEmployees, $department);
 
         // среднесписочная численность
-        $numberOfAverageEmployees = $result['number'];
+        $numberOfAverageEmployees = $result['avg'];
 
         // численность на расчетный период
-        $averageNumberDataChart = $result['chart'];
+        $averageNumberDataChart = $result['chartData'];
 
         // коэффициент текучести
         $turnoverRatio = round(fdiv($numberOfDismissedEmployees, $numberOfAverageEmployees) * 100, 3);
 
         // кол-во уволенных по собств желанию
-        $numberVoluntarily = $this->getNumberVoluntarilyDismissed($valueTo, $valueFrom);
+        $numberVoluntarily = $this->getNumberVoluntarilyDismissed($valueTo, $valueFrom, $department);
 
         // кол-во уволенных по принудительно
-        $numberForced = $this->getNumberForcedDismissed($valueTo, $valueFrom);
+        $numberForced = $this->getNumberForcedDismissed($valueTo, $valueFrom, $department);
 
         // кол-во уволенных нежелательно
-        $numberUndesirable = $this->getNumberUndesirableDismissed($valueTo, $valueFrom);
+        $numberUndesirable = $this->getNumberUndesirableDismissed($valueTo, $valueFrom, $department);
 
         // коэффициент добровольной текучести
         $turnoverVoluntarilyRatio = round(fdiv($numberVoluntarily, $numberOfAverageEmployees) * 100, 3);
@@ -49,44 +50,12 @@ class TurnoverRepository extends LayoffsRepository
         // коэффициент нежелательной текучести
         $turnoverUndesirableRatio = round(fdiv($numberUndesirable, $numberOfAverageEmployees) * 100, 3);
 
-        $labels = ['К.Т.'];
-        $datasets = [
-            [
-                'label' => 'Коэффициент текучести (К.Т.)',
-                'backgroundColor' => self::COLORS[0],
-                'borderWidth' => 1,
-                'data' => [$turnoverRatio],
-            ],
-            [
-                'label' => 'Коэффициент добровольной текучести',
-                'backgroundColor' => self::COLORS[1],
-                'borderWidth' => 1,
-                'data' => [$turnoverVoluntarilyRatio],
-            ],
-            [
-                'label' => 'Коэффициент принудительной текучести',
-                'backgroundColor' => self::COLORS[2],
-                'borderWidth' => 1,
-                'data' => [$turnoverForcedRatio],
-            ],
-            [
-                'label' => 'Коэффициент нежелательной текучести',
-                'backgroundColor' => self::COLORS[3],
-                'borderWidth' => 1,
-                'data' => [$turnoverUndesirableRatio],
-            ],
-        ];
-
         $turnoverChart = [
-            'labels' => $labels,
-            'datasets' => $datasets,
+            ['key' => 'Коэффициент текучести', 'value' => $turnoverRatio],
+            ['key' => 'Коэффициент добровольной текучести', 'value' => $turnoverVoluntarilyRatio],
+            ['key' => 'Коэффициент принудительной текучести', 'value' => $turnoverForcedRatio],
+            ['key' => 'Коэффициент нежелательной текучести', 'value' => $turnoverUndesirableRatio],
         ];
-
-        $turnoverChartByWE = $this->getTurnoverByWorkExperience($valueTo, $valueFrom, $numberOfAverageEmployees);
-
-        $turnoverChartByDep = $this->getTurnoverByDepartment($valueTo, $valueFrom, $numberOfAverageEmployees);
-
-        $turnoverChartByPos = $this->getTurnoverByPosition($valueTo, $valueFrom, $numberOfAverageEmployees);
 
         return [
             'totalNumber' => $numberOfEmployees,
@@ -94,11 +63,8 @@ class TurnoverRepository extends LayoffsRepository
             'decreeNumber' => $numberOfDecreeEmployees,
             'dismissedNumber' => $numberOfDismissedEmployees,
             'averageNumber' => $numberOfAverageEmployees,
-            'averageNumberDataChart' => $averageNumberDataChart,
             'turnoverChart' => $turnoverChart,
-            'turnoverChartByWe' => $turnoverChartByWE,
-            'turnoverChartByDep' => $turnoverChartByDep,
-            'turnoverChartByPos' => $turnoverChartByPos,
+            'averageNumberDataChart' => $averageNumberDataChart,
         ];
     }
 
@@ -106,13 +72,18 @@ class TurnoverRepository extends LayoffsRepository
      * @return int
      *             Количество сотрудников на расчетный период
      */
-    private function getTotalNumberOfEmployees(\DateTimeImmutable $valueTo): int
+    private function getTotalNumberOfEmployees(\DateTimeImmutable $valueTo, string|null $department): int
     {
         $query = $this->createQueryBuilder('e');
         $query
             ->select('e')
             ->andWhere('e.status != 3 OR (e.status = 3 AND e.dateOfDismissal >= :dateOfDismissal)')
             ->setParameter('dateOfDismissal', $valueTo);
+
+        if (!is_null($department)) {
+            $query->andWhere('e.department = :depName')
+                ->setParameter('depName', $department);
+        }
 
         return count($query->getQuery()->getArrayResult());
     }
@@ -121,12 +92,17 @@ class TurnoverRepository extends LayoffsRepository
      * @return int
      *             Количество сотрудников в декрете
      */
-    private function getTotalNumberOfDecreeEmployees(): int
+    private function getTotalNumberOfDecreeEmployees(string|null $department): int
     {
         $query = $this->createQueryBuilder('e');
         $query
             ->select('e');
         $query->andWhere('e.status = 2');
+
+        if (!is_null($department)) {
+            $query->andWhere('e.department = :depName')
+                ->setParameter('depName', $department);
+        }
 
         return count($query->getQuery()->getArrayResult());
     }
@@ -135,7 +111,7 @@ class TurnoverRepository extends LayoffsRepository
      * @return int
      *             Количество принятых сотрудников за расчетный период
      */
-    private function getTotalNumberOfAcceptedEmployees(\DateTimeImmutable $valueTo, \DateTimeImmutable $valueFrom): int
+    private function getTotalNumberOfAcceptedEmployees(\DateTimeImmutable $valueTo, \DateTimeImmutable $valueFrom, string|null $department): int
     {
         $query = $this->createQueryBuilder('e');
         $query
@@ -143,6 +119,11 @@ class TurnoverRepository extends LayoffsRepository
             ->setParameter('dateOfEmployment1', $valueFrom)
             ->andWhere('e.dateOfEmployment <= :dateOfEmployment2')
             ->setParameter('dateOfEmployment2', $valueTo);
+
+        if (!is_null($department)) {
+            $query->andWhere('e.department = :depName')
+                ->setParameter('depName', $department);
+        }
 
         return count($query->getQuery()->getArrayResult());
     }
@@ -154,18 +135,10 @@ class TurnoverRepository extends LayoffsRepository
     private function getNumberOfAverageEmployees(
         \DateTimeImmutable $valueTo,
         \DateTimeImmutable $valueFrom,
-        int $constNumberOfEmployees
+        int $constNumberOfEmployees,
+        string|null $department
     ): array {
-        $labels = [];
-        $datasets = [
-            'label' => 'Списочная численность по всей компании',
-            'backgroundColor' => '#4056A1',
-            'borderWidth' => 1,
-            'data' => [],
-        ];
-
-        $datasets['label'] .=
-            ' за период с '.$valueFrom->format('d.m.Y').' по '.$valueTo->format('d.m.Y');
+        $data = [];
 
         // Среднесписочная численность
 
@@ -177,6 +150,11 @@ class TurnoverRepository extends LayoffsRepository
             ->setParameter('dateOfDismissal1', $valueFrom)
             ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
             ->setParameter('dateOfDismissal2', $valueTo);
+
+        if (!is_null($department)) {
+            $query->andWhere('e.department = :depName')
+                ->setParameter('depName', $department);
+        }
 
         $result = $query->getQuery()->getArrayResult();
 
@@ -193,24 +171,26 @@ class TurnoverRepository extends LayoffsRepository
                 }
             }
             $numberOfAverageEmployees += $currentIncrement;
-            $labels[] = $periodEndDate->format('d.m.Y');
-            $datasets['data'][] = $currentIncrement;
+            $data[] = [
+                'key' => $periodEndDate->format('d.m.Y'),
+                'value' => $currentIncrement,
+            ];
             $periodEndDate = $periodEndDate->modify('-1 day');
         }
 
-        $datasets['data'] = array_reverse($datasets['data']);
+        $datasets['data'] = array_reverse($data);
 
         return [
-            'number' => round(fdiv($numberOfAverageEmployees, $numberOfDays), 3),
-            'chart' => [
-                'labels' => $labels,
-                'datasets' => [$datasets],
-            ],
+            'avg' => round(fdiv($numberOfAverageEmployees, $numberOfDays), 3),
+            'chartData' => $data,
         ];
     }
 
-    private function getNumberVoluntarilyDismissed(\DateTimeImmutable $valueTo, \DateTimeImmutable $valueFrom): int
-    {
+    private function getNumberVoluntarilyDismissed(
+        \DateTimeImmutable $valueTo,
+        \DateTimeImmutable $valueFrom,
+        string|null $department
+    ): int {
         $query = $this->createQueryBuilder('e');
         $query
             ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
@@ -219,11 +199,19 @@ class TurnoverRepository extends LayoffsRepository
             ->setParameter('dateOfDismissal2', $valueTo)
             ->andWhere('e.categoryOfDismissal = 1');
 
+        if (!is_null($department)) {
+            $query->andWhere('e.department = :depName')
+                ->setParameter('depName', $department);
+        }
+
         return count($query->getQuery()->getArrayResult());
     }
 
-    private function getNumberForcedDismissed(\DateTimeImmutable $valueTo, \DateTimeImmutable $valueFrom): int
-    {
+    private function getNumberForcedDismissed(
+        \DateTimeImmutable $valueTo,
+        \DateTimeImmutable $valueFrom,
+        string|null $department
+    ): int {
         $query = $this->createQueryBuilder('e');
         $query
             ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
@@ -232,11 +220,19 @@ class TurnoverRepository extends LayoffsRepository
             ->setParameter('dateOfDismissal2', $valueTo)
             ->andWhere('e.categoryOfDismissal = 2');
 
+        if (!is_null($department)) {
+            $query->andWhere('e.department = :depName')
+                ->setParameter('depName', $department);
+        }
+
         return count($query->getQuery()->getArrayResult());
     }
 
-    private function getNumberUndesirableDismissed(\DateTimeImmutable $valueTo, \DateTimeImmutable $valueFrom): int
-    {
+    private function getNumberUndesirableDismissed(
+        \DateTimeImmutable $valueTo,
+        \DateTimeImmutable $valueFrom,
+        string|null $department
+    ): int {
         $query = $this->createQueryBuilder('e');
         $query
             ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
@@ -245,76 +241,11 @@ class TurnoverRepository extends LayoffsRepository
             ->setParameter('dateOfDismissal2', $valueTo)
             ->andWhere('e.categoryOfDismissal = 3');
 
+        if (!is_null($department)) {
+            $query->andWhere('e.department = :depName')
+                ->setParameter('depName', $department);
+        }
+
         return count($query->getQuery()->getArrayResult());
-    }
-
-    /**
-     * @return array
-     *               Информация об показателях текучести по стажу работы
-     */
-    private function getTurnoverByWorkExperience(
-        \DateTimeImmutable $valueTo,
-        \DateTimeImmutable $valueFrom,
-        float $numberOfAverageEmployees
-    ): array {
-        $turnoverByWorkExperience = $this->getTotalDismissedByWorkExperience($valueTo, $valueFrom);
-        $turnoverByWorkExperience['labels'] = ['К.T. по стажу работы'];
-        $datasets = $turnoverByWorkExperience['datasets'];
-        foreach ($datasets as $i => $iValue) {
-            $datasets[$i]['data'][0] = round(fdiv($iValue['data'][0], $numberOfAverageEmployees) * 100, 3);
-        }
-        $turnoverByWorkExperience['datasets'] = $datasets;
-
-        return $turnoverByWorkExperience;
-    }
-
-    /**
-     * @return array
-     *               Информация об показателях текучести по отделам
-     */
-    private function getTurnoverByDepartment(
-        \DateTimeImmutable $valueTo,
-        \DateTimeImmutable $valueFrom,
-        float $numberOfAverageEmployees
-    ): array {
-        $turnoverByDepartment = $this->getTotalDismissedByDepartment($valueTo, $valueFrom);
-        $labels = $turnoverByDepartment['labels'];
-        $datasets = $turnoverByDepartment['datasets'][0]['data'];
-        foreach ($labels as $i => $iValue) {
-            $labels[$i] = 'К.T. ('.$iValue.')';
-        }
-        foreach ($datasets as $i => $iValue) {
-            $datasets[$i] = round(fdiv($iValue, $numberOfAverageEmployees) * 100, 3);
-        }
-        $turnoverByDepartment['datasets'][0]['data'] = $datasets;
-        $turnoverByDepartment['datasets'][0]['label'] = ['К.T. по отделам'];
-        $turnoverByDepartment['labels'] = $labels;
-
-        return $turnoverByDepartment;
-    }
-
-    /**
-     * @return array
-     *               Информация об показателях текучести по должностям
-     */
-    private function getTurnoverByPosition(
-        \DateTimeImmutable $valueTo,
-        \DateTimeImmutable $valueFrom,
-        float $numberOfAverageEmployees
-    ): array {
-        $turnoverByPos = $this->getTotalDismissedByPosition($valueTo, $valueFrom);
-        $labels = $turnoverByPos['labels'];
-        $datasets = $turnoverByPos['datasets'][0]['data'];
-        foreach ($labels as $i => $iValue) {
-            $labels[$i] = 'К.T. ('.$iValue.')';
-        }
-        foreach ($datasets as $i => $iValue) {
-            $datasets[$i] = round(fdiv($iValue, $numberOfAverageEmployees) * 100, 3);
-        }
-        $turnoverByPos['datasets'][0]['data'] = $datasets;
-        $turnoverByPos['datasets'][0]['label'] = ['К.T. по должностям'];
-        $turnoverByPos['labels'] = $labels;
-
-        return $turnoverByPos;
     }
 }

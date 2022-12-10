@@ -14,7 +14,11 @@ export const defaultConfig = {
     },
     x: {
       ticks: {
-        display: false,
+        display: true,
+        font: {
+          fontSize: 14,
+          family: 'Montserrat Alternates',
+        },
       },
     },
   },
@@ -43,8 +47,10 @@ export const defaultConfig = {
   },
   datasets: {
     line: {
-      tension: 0.3,
+      tension: 0.1,
       borderColor: '#4056A1',
+      fill: false,
+      pointRadius: 0.1,
     },
     bubble: {
       borderColor: 'transparent',

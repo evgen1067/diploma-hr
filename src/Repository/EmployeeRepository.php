@@ -82,6 +82,9 @@ class EmployeeRepository extends ServiceEntityRepository
         }
     }
 
+    /**
+     * @return array
+     */
     public function getDepartmentsNames(): array
     {
         $query = $this->createQueryBuilder('e');
