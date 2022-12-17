@@ -18,7 +18,7 @@ controller:
 	@${CONSOLE} make:controller
 
 install:
-	@${PHP} npm install && ${PHP} composer install
+	@${PHP} npm install
 
 watch:
 	@${PHP} npm run watch
