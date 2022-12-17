@@ -105,6 +105,15 @@
           </div>
         </div>
         <div class="row mb-3">
+          <div class="col-12">
+            <va-card>
+              <va-card-content>
+                <hr-chart :data="averageNumberDataChart" type="line" />
+              </va-card-content>
+            </va-card>
+          </div>
+        </div>
+        <div class="row mb-3">
           <div class="col-4">
             <va-card>
               <va-card-content>
@@ -113,34 +122,27 @@
             </va-card>
           </div>
           <div class="col-8">
-            <!--                    <va-card>-->
-            <!--                      <va-card-content>-->
-            <!--                        <hr-chart :data="turnoverData.turnoverChartByWe" type="horizontal-bar" />-->
-            <!--                      </va-card-content>-->
-            <!--                    </va-card>-->
+            <va-card>
+              <va-card-content>
+                <hr-chart :data="workExperienceChart" type="horizontal-bar" />
+              </va-card-content>
+            </va-card>
           </div>
         </div>
-        <!--        <div class="row mb-3">-->
-        <!--          <div class="col-5">-->
-        <!--            <va-card>-->
-        <!--              <va-card-content>-->
-        <!--                <hr-chart style="height: 800px" :data="turnoverData.turnoverChartByDep" type="horizontal-bar" />-->
-        <!--              </va-card-content>-->
-        <!--            </va-card>-->
-        <!--          </div>-->
-        <!--          <div class="col-7">-->
-        <!--            <va-card>-->
-        <!--              <va-card-content>-->
-        <!--                <hr-chart style="height: 800px" :data="turnoverData.turnoverChartByPos" type="horizontal-bar" />-->
-        <!--              </va-card-content>-->
-        <!--            </va-card>-->
-        <!--          </div>-->
-        <!--        </div>-->
         <div class="row mb-3">
           <div class="col-12">
             <va-card>
               <va-card-content>
-                <hr-chart :data="averageNumberDataChart" type="line" />
+                <hr-chart style="height: 800px" :data="departmentChart" type="horizontal-bar" />
+              </va-card-content>
+            </va-card>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-12">
+            <va-card>
+              <va-card-content>
+                <hr-chart style="height: 800px" :data="positionChart" type="horizontal-bar" />
               </va-card-content>
             </va-card>
           </div>
@@ -155,13 +157,13 @@
 
 <script>
 import { ChartApi } from '@/api/chart/ChartApi';
-import { VaCard, VaCardContent, VaDateInput, VaPopover } from 'vuestic-ui';
+import { EmployeeApi } from '@/api/employee/EmployeeApi';
 import { cloneDeep } from 'lodash';
+import randomColor from 'randomcolor';
+import { VaCard, VaCardContent, VaDateInput, VaPopover } from 'vuestic-ui';
 import HrChart from '@/ui/hrChart/HrChart';
 import HrSpinner from '@/ui/hrSpinner/HrSpinner';
 import HrCard from '@/ui/hrCard/HrCard';
-import randomColor from 'randomcolor';
-import { EmployeeApi } from '@/api/employee/EmployeeApi';
 
 export default {
   name: 'TurnoverRates',
@@ -187,6 +189,13 @@ export default {
     this.loading = false;
   },
   methods: {
+    toast(message, color) {
+      this.$vaToast.init({
+        message: message,
+        color: color,
+        position: 'bottom-right',
+      });
+    },
     // настройки по умолчанию
     async defaultSettings() {
       this.filter.valueTo = new Date();
@@ -213,6 +222,7 @@ export default {
       this.loading = true;
       this.turnoverData = await ChartApi.getTurnoverInfo(this.clearFilter());
       this.loading = false;
+      this.toast('Данные загружены', 'success');
     },
     // очистка фильтра
     clearFilter() {
@@ -270,7 +280,26 @@ export default {
     },
     averageNumberDataChart() {
       if (this.turnoverData?.averageNumberDataChart) {
-        return this.getTurnoverChart(this.turnoverData.averageNumberDataChart, 'Списочная численность', false);
+        return this.getTurnoverChart(
+          this.turnoverData.averageNumberDataChart,
+          'Списочная численность в компании',
+          false,
+        );
+      } else return null;
+    },
+    workExperienceChart() {
+      if (this.turnoverData?.workExperienceChart) {
+        return this.getTurnoverChart(this.turnoverData.workExperienceChart, 'Коэффициент текучести от стажа работы');
+      } else return null;
+    },
+    departmentChart() {
+      if (this.turnoverData?.departmentChart) {
+        return this.getTurnoverChart(this.turnoverData.departmentChart, 'Коэффициент текучести от должности');
+      } else return null;
+    },
+    positionChart() {
+      if (this.turnoverData?.positionChart) {
+        return this.getTurnoverChart(this.turnoverData.positionChart, 'Коэффициент текучести от отдела');
       } else return null;
     },
   },

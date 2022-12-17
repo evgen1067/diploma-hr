@@ -117,14 +117,16 @@
           </div>
         </div>
         <div class="row mb-3">
-          <div class="col-5">
+          <div class="col-12">
             <va-card>
               <va-card-content>
                 <hr-chart style="height: 800px" :data="departmentChart" type="horizontal-bar" />
               </va-card-content>
             </va-card>
           </div>
-          <div class="col-7">
+        </div>
+        <div class="row mb-3">
+          <div class="col-12">
             <va-card>
               <va-card-content>
                 <hr-chart style="height: 800px" :data="positionChart" type="horizontal-bar" />

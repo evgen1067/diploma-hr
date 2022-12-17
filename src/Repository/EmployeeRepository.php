@@ -41,24 +41,6 @@ class EmployeeRepository extends ServiceEntityRepository
         3 => 'нежелательная',
     ];
 
-    protected const COLORS = [
-        '#2191FB',
-        '#8CDEDC',
-        '#329F5B',
-        '#8380B6',
-        '#6465A5',
-        '#177E89',
-        '#F40076',
-        '#FF6700',
-        '#A37C27',
-        '#F3CD05',
-        '#282726',
-        '#2D1115',
-        '#CEFF1A',
-        '#A7414A',
-        '#D72638',
-    ];
-
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Employee::class);

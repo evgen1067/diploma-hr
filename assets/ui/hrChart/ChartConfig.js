@@ -9,6 +9,10 @@ export const defaultConfig = {
         font: {
           fontSize: 12,
           family: 'Montserrat Alternates',
+          callback: function (value) {
+            const val = `${value}`;
+            return val.length > 4 ? `${val.substring(0, 4)}...` : val;
+          },
         },
       },
     },
