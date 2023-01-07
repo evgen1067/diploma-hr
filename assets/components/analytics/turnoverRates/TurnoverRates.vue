@@ -121,10 +121,17 @@
               </va-card-content>
             </va-card>
           </div>
-          <div class="col-8">
+          <div class="col-4">
             <va-card>
               <va-card-content>
                 <hr-chart :data="workExperienceChart" type="horizontal-bar" />
+              </va-card-content>
+            </va-card>
+          </div>
+          <div class="col-4">
+            <va-card>
+              <va-card-content>
+                <hr-chart :data="genderChart" type="bar" />
               </va-card-content>
             </va-card>
           </div>
@@ -300,6 +307,11 @@ export default {
     positionChart() {
       if (this.turnoverData?.positionChart) {
         return this.getTurnoverChart(this.turnoverData.positionChart, 'Коэффициент текучести от отдела');
+      } else return null;
+    },
+    genderChart() {
+      if (this.turnoverData?.genderChart) {
+        return this.getTurnoverChart(this.turnoverData.genderChart, 'Коэффициент текучести от пола');
       } else return null;
     },
   },

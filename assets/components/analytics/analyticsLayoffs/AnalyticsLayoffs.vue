@@ -101,17 +101,24 @@
           </div>
         </div>
         <div class="row mb-3">
-          <div class="col-6">
+          <div class="col-4">
             <va-card>
               <va-card-content>
                 <hr-chart :data="workExpChart" type="bar" />
               </va-card-content>
             </va-card>
           </div>
-          <div class="col-6">
+          <div class="col-4">
             <va-card>
               <va-card-content>
                 <hr-chart :data="categoryChart" type="bar" />
+              </va-card-content>
+            </va-card>
+          </div>
+          <div class="col-4">
+            <va-card>
+              <va-card-content>
+                <hr-chart :data="genderChart" type="bar" />
               </va-card-content>
             </va-card>
           </div>
@@ -268,6 +275,11 @@ export default {
     departmentChart() {
       if (this.layoffsInfo?.departmentChart) {
         return this.getLayoffsChart(this.layoffsInfo.departmentChart);
+      } else return null;
+    },
+    genderChart() {
+      if (this.layoffsInfo?.genderChart) {
+        return this.getLayoffsChart(this.layoffsInfo.genderChart);
       } else return null;
     },
     positionChart() {

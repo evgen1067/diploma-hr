@@ -64,6 +64,12 @@ class TurnoverRepository extends LayoffsRepository
                 round(fdiv($workExperienceChart[$i]['value'], $numberOfAverageEmployees) * 100, 3);
         }
 
+        $genderChart = self::getTotalDismissedEmployeesByGender($valueTo, $valueFrom, $department);
+        for ($i = 0; $i < count($genderChart); ++$i) {
+            $genderChart[$i]['value'] =
+                round(fdiv($genderChart[$i]['value'], $numberOfAverageEmployees) * 100, 3);
+        }
+
         $departmentChart = self::getTotalDismissedByPosition($valueTo, $valueFrom);
         for ($i = 0; $i < count($departmentChart); ++$i) {
             $departmentChart[$i]['value'] =
@@ -87,6 +93,7 @@ class TurnoverRepository extends LayoffsRepository
             'workExperienceChart' => $workExperienceChart,
             'departmentChart' => $departmentChart,
             'positionChart' => $positionChart,
+            'genderChart' => $genderChart,
         ];
     }
 

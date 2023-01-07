@@ -20,6 +20,8 @@ class LayoffsRepository extends EmployeeRepository
         $workExpChart = $this->getTotalDismissedByWorkExperience($valueTo, $valueFrom, $department);
         // данные по увольнениям в зависимости от категории увольнения
         $categoryChart = $this->getTotalDismissedByCategory($valueTo, $valueFrom, $department);
+        // данные по увольнениям в зависимости от гендера
+        $genderChart = $this->getTotalDismissedEmployeesByGender($valueTo, $valueFrom, $department);
 
         return [
             'totalDismissed' => $totalDismissed, // кол-во уволенных
@@ -29,7 +31,40 @@ class LayoffsRepository extends EmployeeRepository
             'workExpChart' => $workExpChart, // общий график по должностям
             'categoryChart' => $categoryChart, // общий график по категориям
             'reasonChart' => $reasonChart, // общий график по причинам
+            'genderChart' => $genderChart, // общий график по гендерам
         ];
+    }
+
+    /**
+     * @param \DateTimeImmutable $valueTo
+     * @param \DateTimeImmutable $valueFrom
+     * @param string|null $department
+     * @return array
+     */
+    public function getTotalDismissedEmployeesByGender(\DateTimeImmutable $valueTo, \DateTimeImmutable $valueFrom, ?string $department): array
+    {
+        $query = $this->createQueryBuilder('e');
+        $query
+            ->select('count(e.dateOfDismissal) as count')
+            ->addSelect('e.gender')
+            ->andWhere('e.dateOfDismissal >= :dateOfDismissal1')
+            ->setParameter('dateOfDismissal1', $valueFrom)
+            ->andWhere('e.dateOfDismissal <= :dateOfDismissal2')
+            ->setParameter('dateOfDismissal2', $valueTo)
+            ->groupBy('e.gender');
+        $result = $query->getQuery()->getArrayResult();
+
+        $data = [];
+
+        foreach ($result as $key => $item) {
+            $data[] = [
+                'key' => self::GENDER_TYPES[$item['gender']],
+                'value' => $item['count'],
+            ];
+        }
+
+        // график уволенных по гендеру
+        return $data;
     }
 
     /**
