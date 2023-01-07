@@ -9,6 +9,16 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: EmployeeRepository::class)]
 class Employee
 {
+    private const GENDER_TYPES = [
+        1 => 'мужской',
+        2 => 'женский',
+    ];
+
+    private const REVERSE_GENDER_TYPES = [
+        'мужской' => 1,
+        'женский' => 2,
+    ];
+    
     private const STATUS_TYPES = [
         1 => 'работает',
         2 => 'декрет',
@@ -95,6 +105,9 @@ class Employee
     // Категория увольнения
     #[ORM\Column(type: Types::SMALLINT, nullable: true)]
     private ?int $categoryOfDismissal = null;
+
+    #[ORM\Column(type: Types::SMALLINT)]
+    private ?int $gender = null;
 
     // TODO LEVEL
 //    #[ORM\Column(type: Types::SMALLINT)]
@@ -263,4 +276,16 @@ class Employee
 //
 //        return $this;
 //    }
+
+public function getGender(): ?int
+{
+    return $this->gender;
+}
+
+public function setGender(int $gender): self
+{
+    $this->gender = $gender;
+
+    return $this;
+}
 }

@@ -41,6 +41,11 @@ class EmployeeRepository extends ServiceEntityRepository
         3 => 'нежелательная',
     ];
 
+    protected const GENDER_TYPES = [
+        1 => 'мужской',
+        2 => 'женский',
+    ];
+
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Employee::class);

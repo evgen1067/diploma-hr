@@ -83,20 +83,23 @@ class Person
         'Борисовна', 'Максимовна',
     ];
 
-    public function getFullName(): string
+    public function getPersonInformation(): array
     {
         $lastName = static::randomElement(static::$lastName);
         $firstName = static::randomElement(static::$firstNameMale);
         $middleName = static::randomElement(static::$middleNameMale);
-        $gender = mt_rand(0, 1);
+        $gender = mt_rand(1, 2);
 
-        if (0 === $gender) {
+        if (1 === $gender) {
             $lastName .= 'а';
             $firstName = static::randomElement(static::$firstNameFemale);
             $middleName = static::randomElement(static::$middleNameFemale);
         }
 
-        return $lastName.' '.$firstName.' '.$middleName;
+        return [
+            'fullName' => $lastName.' '.$firstName.' '.$middleName,
+            'gender' => $gender,
+        ];
     }
 
     public static function randomElement($array = ['a', 'b', 'c'])

@@ -49,8 +49,10 @@ class AppFixtures extends Fixture
             $employee = new Employee();
             $csv[$i][1] = \DateTimeImmutable::createFromFormat($format, $iValue[1]);
             $csv[$i][5] = self::REVERSE_STATUS_TYPES[$iValue[5]];
+            $info = $person->getPersonInformation();
             $employee
-                ->setFullName($person->getFullName())
+                ->setFullName($info['fullName'])
+                ->setGender($info['gender'])
                 ->setDateOfEmployment($csv[$i][1])
                 ->setDepartment($csv[$i][3])
                 ->setPosition($csv[$i][4])

@@ -9,6 +9,22 @@ const employeeData = [
     rule: [value => value.trim().length > 0 || 'ФИО не может быть пустым'],
   },
   {
+    key: 'gender',
+    datatype: 'list',
+    listItems: [
+      {
+        label: 'мужской',
+        listValueId: 1,
+      },
+      {
+        label: 'женский',
+        listValueId: 2,
+      },
+    ],
+    label: 'Пол',
+    rule: [value => [1, 2].includes(value) || 'Пол не может быть пустым'],
+  },
+  {
     key: 'dateOfEmployment',
     datatype: 'date',
     label: 'Дата трудоустройства',

@@ -40,6 +40,7 @@ class TableRepository extends EmployeeRepository
             );
             $table[$key]['dateOfEmployment'] = $table[$key]['dateOfEmployment']->format('d.m.Y');
             $table[$key]['status'] = self::STATUS_TYPES[$table[$key]['status']];
+            $table[$key]['gender'] = self::GENDER_TYPES[$table[$key]['gender']];
             if (isset($item['dateOfDismissal'])) {
                 $table[$key]['dateOfDismissal'] = $table[$key]['dateOfDismissal']->format('d.m.Y');
                 $table[$key]['reasonForDismissal'] = self::REASON_TYPES[$table[$key]['reasonForDismissal']];
